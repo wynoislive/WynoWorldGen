@@ -1,0 +1,19 @@
+name: WYNO_GEN
+version: 5.0.0
+main: me.wyno.wynogen.WynoGen
+api-version: '1.20'
+softdepend: [ViaVersion, ViaBackwards, ViaRewind, Geyser-Spigot, floodgate]
+author: WYNO
+description: Generates, manages, and tracks special difficulty-based survival worlds.
+commands:
+  featuredworld:
+    description: Main command for WYNO GEN.
+    aliases: [fw]
+    permission: wynogen.use
+permissions:
+  wynogen.admin:
+    description: Allows administrative actions (create, delete worlds).
+    default: op
+  wynogen.use:
+    description: Allows users to join and exit featured worlds.
+    default: true
