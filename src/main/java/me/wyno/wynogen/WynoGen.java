@@ -5,6 +5,7 @@ import me.wyno.wynogen.listeners.PlayerListener;
 import me.wyno.wynogen.managers.DatabaseManager;
 import me.wyno.wynogen.managers.LanguageManager;
 import me.wyno.wynogen.managers.DataManager;
+import me.wyno.wynogen.managers.UpdateManager;
 import me.wyno.wynogen.managers.WorldManager;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
