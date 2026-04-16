@@ -62,7 +62,7 @@ database:
 
 ## 📥 Installation
 
-1. Download the latest **[Release](https://github.com/encounter0001/WynoWorldGen/releases)**.
+1. Download the latest **[Release](https://github.com/wynoislive/WynoWorldGen/releases)**.
 2. Place the JAR in your `plugins/` folder.
 3. Restart the server. 
    - **SQLite**: No further steps.

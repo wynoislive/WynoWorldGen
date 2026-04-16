@@ -11,6 +11,13 @@
 
     <name>WYNO GEN</name>
     <description>Professional Difficulty-Based World Management for Minecraft.</description>
+    <url>https://github.com/wynoislive/WynoWorldGen</url>
+
+    <scm>
+        <connection>scm:git:https://github.com/wynoislive/WynoWorldGen.git</connection>
+        <developerConnection>scm:git:https://github.com/wynoislive/WynoWorldGen.git</developerConnection>
+        <url>https://github.com/wynoislive/WynoWorldGen</url>
+    </scm>
 
     <properties>
         <java.version>21</java.version>
