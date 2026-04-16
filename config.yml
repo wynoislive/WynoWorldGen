@@ -24,5 +24,8 @@ options:
   # Disable portals (Nether/End) in featured worlds to prevent "pollution"
   disable_portals: true
   
+  # Stay in the same world after dying instead of returning to main world spawn / bed?
+  respawn_in_same_world: true
+  
   # bStats helps developers track plugin usage anonymously.
   metrics: true

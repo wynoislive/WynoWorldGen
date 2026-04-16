@@ -45,12 +45,26 @@ public class PlayerListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onRespawn(PlayerRespawnEvent event) {
         String fromWorld = event.getPlayer().getWorld().getName();
-        String toWorld = event.getRespawnLocation().getWorld().getName();
-        
         boolean fromFeatured = plugin.getWorldManager().isFeaturedWorld(fromWorld);
+        
+        // --- Logic: Stay in Featured World on Death ---
+        if (fromFeatured && plugin.getConfig().getBoolean("options.respawn_in_same_world", true)) {
+            org.bukkit.World currentWorld = event.getPlayer().getWorld();
+            org.bukkit.Location bed = event.getPlayer().getBedSpawnLocation();
+            
+            // If they have a bed IN THE SAME world, use it. Otherwise, force world spawn.
+            if (bed != null && bed.getWorld().getName().equals(fromWorld)) {
+                event.setRespawnLocation(bed);
+            } else {
+                event.setRespawnLocation(currentWorld.getSpawnLocation());
+            }
+        }
+
+        // --- Data Sync Management ---
+        String toWorld = event.getRespawnLocation().getWorld().getName();
         boolean toFeatured = plugin.getWorldManager().isFeaturedWorld(toWorld);
 
         if (fromFeatured != toFeatured) {
