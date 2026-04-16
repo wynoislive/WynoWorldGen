@@ -1,0 +1,28 @@
+# WYNO GEN Configuration
+# Professional Difficulty-Based World Management
+
+database:
+  # Type can be MYSQL or SQLITE.
+  # SQLITE is automatic and requires no configuration.
+  # MYSQL is recommended for high-performance enterprise setups.
+  type: "SQLITE"
+  
+  # MySQL Connection Details (Only needed if type is MYSQL)
+  DB_HOST: "localhost"
+  DB_PORT: 3306
+  DB_USER: "root"
+  DB_PASSWORD: "your_password"
+  DB_NAME: "smp_unv_db"
+
+options:
+  # How often to save all online player data (in ticks, 20 ticks = 1 second)
+  save_interval_ticks: 6000 # 5 minutes
+  
+  # Teleport invulnerability duration (in ticks)
+  safety_buffer_ticks: 60 # 3 seconds
+  
+  # Disable portals (Nether/End) in featured worlds to prevent "pollution"
+  disable_portals: true
+  
+  # bStats helps developers track plugin usage anonymously.
+  metrics: true
