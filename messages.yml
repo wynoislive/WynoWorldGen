@@ -1,0 +1,47 @@
+# WYNO GEN Language Configuration
+# You can use & for color codes.
+
+prefix: "&8[&bWYNO&fGEN&8] &7"
+
+general:
+  only-players: "&cOnly players can use this command."
+  no-permission: "&cYou do not have permission to do this."
+  world-not-found: "&cThat world is not a featured world or does not exist."
+  not-in-featured: "&cYou are not in a featured world."
+  reloaded: "&aPlugin configuration and messages have been reloaded!"
+
+commands:
+  create:
+    usage: "&cUsage: /fw create <name> <easy|medium|hard> [tight]"
+    invalid-difficulty: "&cInvalid difficulty! Use EASY, MEDIUM, or HARD."
+    starting: "&aStarting world generation for '&f{name}&a' ({difficulty}){tight}..."
+    success: "&aWorld '&f{name}&a' created successfully!"
+    failed: "&cFailed to create world. It might already exist."
+  delete:
+    usage: "&7To delete a world, use: &b/fw delete <name>"
+    success: "&cWorld '&f{name}&c' has been deleted."
+    failed: "&cCould not delete world '&f{name}&c'. Is it a featured world?"
+  join:
+    usage: "&7To join a world, use: &b/fw join <name>"
+    preparing: "&ePreparing world jump... &7(Syncing data)"
+    success: "&aJoined world '&f{name}&a'. Data isolated."
+  exit:
+    preparing: "&eReturning to main world... &7(Restoring data)"
+    success: "&eReturned to main world. Data restored."
+  list:
+    header: "&8&m-------&r &bFeatured Worlds &8&m-------"
+    item: " &8» &f{name} &7(Difficulty: {difficulty})"
+    no-worlds: "&cNo featured worlds created yet."
+    footer: "&8&m----------------------------"
+  help:
+    header: "&8&m-------&r &bWYNO&fGEN &8&m-------"
+    join: "&b/fw join <world> &7- Enter a featured world"
+    list: "&b/fw list &7- List all featured worlds"
+    exit: "&b/fw exit &7- Return to the main world"
+    create: "&b/fw create <name> <diff> [tight] &7- Create a world"
+    delete: "&b/fw delete <name> &7- Delete a world"
+    reload: "&b/fw reload &7- Reload config and messages"
+    footer: "&8&m----------------------"
+
+world:
+  portals-disabled: "&cPortals are disabled in featured worlds. Use &b/fw exit &cto leave."
