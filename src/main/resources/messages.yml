@@ -45,3 +45,11 @@ commands:
 
 world:
   portals-disabled: "&cPortals are disabled in featured worlds. Use &b/fw exit &cto leave."
+
+update:
+  checking: "&eChecking for updates..."
+  available: "&aA new update is available: &f{version}&a! Use &b/wynogen update &ato install."
+  downloading: "&eDownloading update... please wait."
+  success: "&aUpdate installed successfully! Please &6restart the server &ato apply changes."
+  error: "&cAn error occurred during the update: &f{error}"
+  rollback-success: "&aRollback successful! The previous JAR has been restored. Please restart."

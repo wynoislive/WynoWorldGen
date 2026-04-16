@@ -43,6 +43,16 @@ public class PlayerListener implements Listener {
             plugin.getDataManager().loadPlayerData(event.getPlayer(), worldName);
             applySafety(event.getPlayer());
         }
+
+        // --- Update Notification ---
+        if (event.getPlayer().hasPermission("wynogen.admin") && plugin.getConfig().getBoolean("options.updater.notify_admins", true)) {
+            plugin.getUpdateManager().checkForUpdates().thenAccept(available -> {
+                if (available) {
+                    event.getPlayer().sendMessage(plugin.getLanguageManager().getMessage("update.available")
+                            .replace("{version}", plugin.getUpdateManager().getLatestVersion()));
+                }
+            });
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)

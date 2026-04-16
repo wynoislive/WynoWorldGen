@@ -46,6 +46,8 @@ public class FWCommand implements CommandExecutor, TabCompleter {
             case "exit" -> handleExit(player);
             case "list" -> handleList(player);
             case "reload" -> handleReload(player);
+            case "update" -> handleUpdate(player);
+            case "rollback" -> handleRollback(player);
             default -> sendHelp(player);
         }
 
@@ -179,6 +181,40 @@ public class FWCommand implements CommandExecutor, TabCompleter {
         player.sendMessage(lang.getMessage("general.reloaded"));
     }
 
+    private void handleUpdate(Player player) {
+        if (!player.hasPermission("wynogen.admin")) {
+            player.sendMessage(lang.getMessage("general.no-permission"));
+            return;
+        }
+        player.sendMessage(lang.getMessage("update.checking"));
+        plugin.getUpdateManager().checkForUpdates().thenAccept(available -> {
+            if (!available) {
+                player.sendMessage(lang.getPrefix() + "&cNo updates found.");
+                return;
+            }
+            player.sendMessage(lang.getMessage("update.downloading"));
+            plugin.getUpdateManager().downloadAndInstall().thenAccept(success -> {
+                if (success) {
+                    player.sendMessage(lang.getMessage("update.success"));
+                } else {
+                    player.sendMessage(lang.getMessage("update.error").replace("{error}", "Download failed or JAR locked."));
+                }
+            });
+        });
+    }
+
+    private void handleRollback(Player player) {
+        if (!player.hasPermission("wynogen.admin")) {
+            player.sendMessage(lang.getMessage("general.no-permission"));
+            return;
+        }
+        if (plugin.getUpdateManager().rollback()) {
+            player.sendMessage(lang.getMessage("update.rollback-success"));
+        } else {
+            player.sendMessage(lang.getMessage("update.error").replace("{error}", "No backup found or restoration failed."));
+        }
+    }
+
     private void handleList(Player player) {
         sendWorldList(player, null);
     }
@@ -208,6 +244,8 @@ public class FWCommand implements CommandExecutor, TabCompleter {
             player.sendMessage(lang.getRawMessage("commands.help.create"));
             player.sendMessage(lang.getRawMessage("commands.help.delete"));
             player.sendMessage(lang.getRawMessage("commands.help.reload"));
+            player.sendMessage("§b/fw update §7- Install the latest update");
+            player.sendMessage("§b/fw rollback §7- Revert to previous JAR");
         }
         player.sendMessage(lang.getMessage("commands.help.footer"));
     }
@@ -230,6 +268,8 @@ public class FWCommand implements CommandExecutor, TabCompleter {
                 subs.add("create");
                 subs.add("delete");
                 subs.add("reload");
+                subs.add("update");
+                subs.add("rollback");
             }
             return subs.stream().filter(s -> s.startsWith(args[0].toLowerCase())).collect(Collectors.toList());
         }

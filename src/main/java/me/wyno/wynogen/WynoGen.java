@@ -18,6 +18,7 @@ public class WynoGen extends JavaPlugin {
     private DataManager dataManager;
     private DatabaseManager databaseManager;
     private LanguageManager languageManager;
+    private UpdateManager updateManager;
 
     @Override
     public void onEnable() {
@@ -29,6 +30,18 @@ public class WynoGen extends JavaPlugin {
         this.databaseManager = new DatabaseManager(this);
         this.worldManager = new WorldManager(this);
         this.dataManager = new DataManager(this);
+        this.updateManager = new UpdateManager(this);
+
+        // 2.5 Check for updates asynchronously
+        if (getConfig().getBoolean("options.updater.auto_check", true)) {
+            updateManager.checkForUpdates().thenAccept(available -> {
+                if (available) {
+                    getLogger().info("A new version is available: v" + updateManager.getLatestVersion());
+                } else {
+                    getLogger().info("You are running the latest version.");
+                }
+            });
+        }
 
         // 3. Register Metrics (bStats)
         if (getConfig().getBoolean("options.metrics", true)) {
@@ -96,5 +109,9 @@ public class WynoGen extends JavaPlugin {
 
     public DataManager getDataManager() {
         return dataManager;
+    }
+
+    public UpdateManager getUpdateManager() {
+        return updateManager;
     }
 }

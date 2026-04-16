@@ -29,3 +29,8 @@ options:
   
   # bStats helps developers track plugin usage anonymously.
   metrics: true
+
+  # Auto-updater system settings
+  updater:
+    auto_check: true
+    notify_admins: true
