@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+:root {
+  --font-inter: 'Inter', sans-serif;
+  --color-onyx: #050505;
+  --color-cyan: #00f7ff;
+  --color-gold: #ffcc00;
+}
+
+body {
+  background-color: var(--color-onyx);
+  color: white;
+  font-family: var(--font-inter);
+  margin: 0;
+  overflow-x: hidden;
+}
+
+/* Glassmorphism utility */
+.glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cyan-glow {
+  box-shadow: 0 0 20px rgba(0, 247, 255, 0.2);
+}
+
+.gold-glow {
+  box-shadow: 0 0 20px rgba(255, 204, 0, 0.2);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #050505;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1a1a1a;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #333;
+}
