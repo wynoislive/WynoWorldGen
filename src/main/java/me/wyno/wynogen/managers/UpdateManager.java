@@ -29,7 +29,7 @@ public class UpdateManager {
     public CompletableFuture<Boolean> checkForUpdates() {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                HttpURLConnection connection = (HttpURLConnection) new URL("https://api.github.com/repos/" + repo + "/releases/latest").openConnection();
+                HttpURLConnection connection = (HttpURLConnection) URI.create("https://api.github.com/repos/" + repo + "/releases/latest").toURL().openConnection();
                 connection.setRequestProperty("User-Agent", "WynoGen-Updater");
                 connection.setRequestMethod("GET");
 
@@ -86,7 +86,7 @@ public class UpdateManager {
                 Files.copy(currentJar.toPath(), backupFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
                 // 2. Download new JAR to a temporary file
-                URL url = new URL(downloadUrl);
+                URL url = URI.create(downloadUrl).toURL();
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestProperty("User-Agent", "WynoGen-Updater");
 

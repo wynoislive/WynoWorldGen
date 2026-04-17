@@ -1,49 +1,58 @@
 @import "tailwindcss";
 
-:root {
-  --font-inter: 'Inter', sans-serif;
-  --color-onyx: #050505;
+@font-face {
+  font-family: 'Outfit';
+  src: url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&display=swap');
+}
+
+@theme {
+  --font-outfit: 'Outfit', sans-serif;
   --color-cyan: #00f7ff;
   --color-gold: #ffcc00;
+  --color-onyx: #050505;
+}
+
+:root {
+  background-color: #050505;
+  color-scheme: dark;
 }
 
 body {
-  background-color: var(--color-onyx);
-  color: white;
-  font-family: var(--font-inter);
   margin: 0;
+  padding: 0;
+  background-color: #050505;
+  color: white;
+  min-height: 100vh;
+  width: 100vw;
   overflow-x: hidden;
 }
 
-/* Glassmorphism utility */
+/* Advanced Glassmorphism */
 .glass {
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
 }
 
 .cyan-glow {
-  box-shadow: 0 0 20px rgba(0, 247, 255, 0.2);
+  box-shadow: 0 0 30px rgba(0, 247, 255, 0.3);
+  border-color: rgba(0, 247, 255, 0.5);
 }
 
 .gold-glow {
-  box-shadow: 0 0 20px rgba(255, 204, 0, 0.2);
+  box-shadow: 0 0 30px rgba(255, 204, 0, 0.3);
+  border-color: rgba(255, 204, 0, 0.5);
 }
 
-::-webkit-scrollbar {
-  width: 8px;
+/* Custom Animations */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
 }
 
-::-webkit-scrollbar-track {
-  background: #050505;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #1a1a1a;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #333;
+.animate-float {
+  animation: float 4s ease-in-out infinite;
 }
