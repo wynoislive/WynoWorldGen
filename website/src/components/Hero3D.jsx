@@ -108,7 +108,6 @@ const Island = () => {
           position={[0, 4, 0]}
           fontSize={1.2}
           color="#ffffff"
-          font="https://fonts.gstatic.com/s/silkscreen/v1/m8JXjfS2P-p3E4Y2T-qN.woff"
           anchorX="center"
           anchorY="middle"
         >

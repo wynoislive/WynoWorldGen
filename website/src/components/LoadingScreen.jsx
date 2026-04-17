@@ -7,14 +7,17 @@ const LoadingScreen = ({ onStarted }) => {
   const [showButton, setShowButton] = useState(false);
 
   useEffect(() => {
-    // Fail-safe: Force show button after 3 seconds regardless of progress
+    console.log(`Mission Loader Synced: ${Math.round(progress)}%`);
+    
+    // Fail-safe: Force show button after 3 seconds
     const timer = setTimeout(() => {
       setShowButton(true);
-      console.log('Master Logic: Loading fail-safe triggered.');
+      console.log('Master Logic: Loading fail-safe triggered (3s timeout).');
     }, 3000);
 
     if (progress >= 100) {
       setShowButton(true);
+      console.log('Master Logic: Assets reached 100%.');
       clearTimeout(timer);
     }
     
