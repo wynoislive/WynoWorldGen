@@ -26,4 +26,8 @@ Need help? Join our official community on Discord for real-time support and upda
 - **Global Localization**: Highly customizable `messages.yml` allowing for 100% translatable strings.
 
 ---
+<<<<<<< HEAD
 Created and maintained with professional developer standards.
+=======
+Created and maintained with professional developer standards.
+>>>>>>> 4bb0bf98b3b16684216f45f388d8fe0ba9f86d9e
