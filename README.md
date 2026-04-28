@@ -35,6 +35,7 @@ When you create a Featured World, the plugin automatically creates **private Net
 | Featured World | Auto-Created Companions |
 |:---|:---|
 | `EasyWorld` | `EasyWorld-nether` + `EasyWorld-end` |
+| `MediumWorld` | `MediumWorld-nether` + `MediumWorld-end` |
 | `HardSMP` | `HardSMP-nether` + `HardSMP-end` |
 
 - Players enter portals and are routed to that world's **private** Nether/End — never the server's global dimensions.
