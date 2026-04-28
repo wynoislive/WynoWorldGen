@@ -61,11 +61,13 @@ Each Mode (`Easy`, `Medium`, `Hard`) is a distinct data silo. A player's progres
 
 Follow these steps for a perfect deployment:
 
-1.  **Download**: Get the latest `WynoWorldGen-6.2.1.jar` from the **[Releases](https://github.com/wynoislive/WynoWorldGen/releases)** page.
+1.  **Download**: Get the latest **[WynoWorldGen-6.2.1.jar](https://github.com/wynoislive/WynoWorldGen/releases/tag/v6.2.1)** from the latest release.
 2.  **Upload**: Place the file into your server's `/plugins` directory.
-3.  **Start**: Restart your server to generate the default configuration files.
-4.  **Configure**: Open `plugins/WynoWorldGen/config.yml` to set your database preferences (SQLite is used by default).
-5.  **Ready**: Use `/fw create <name> <difficulty>` to build your first survival mode.
+3.  **Start**: Restart your server — a default `config.yml` and `messages.yml` are generated automatically.
+4.  **Configure**: *(Optional)* Switch to MySQL in `config.yml` and run `/fw reload`.
+
+### Upgrading from v5.x
+Drop in the new JAR and restart. The plugin reads your existing `worlds.yml` and automatically migrates old world entries. No data loss.
 
 ---
 
