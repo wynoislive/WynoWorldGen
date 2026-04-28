@@ -149,7 +149,7 @@ const App = () => {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan"></span>
             </span>
-            <span>Version 5.1.0 Released</span>
+            <span>Version 6.2.0 Released</span>
           </div>
           
           <h1 className="text-6xl md:text-9xl font-extrabold font-outfit tracking-tighter mb-8 leading-none">
@@ -206,24 +206,30 @@ const App = () => {
           <h2 className="text-5xl md:text-7xl font-bold font-outfit mb-8 tracking-tighter italic">CORE ARCHITECTURE</h2>
           <div className="h-1 w-32 bg-cyan mx-auto"></div>
         </div>
-        <div className="grid md:grid-cols-3 gap-12">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12">
           <FeatureCard 
             icon={Shield} 
             title="DATA ISOLATION" 
-            description="The most robust inventory and player data isolation system ever built for Spigot. 100% collision proof."
+            description="Robust inventory and player data isolation system. 100% collision proof across all dimensions."
             delay={0.1}
+          />
+          <FeatureCard 
+            icon={Database} 
+            title="COMPANION WORLDS" 
+            description="Auto-generates private Nether and End dimensions for every featured world. True isolation."
+            delay={0.2}
           />
           <FeatureCard 
             icon={Zap} 
             title="SMART UPDATER" 
             description="Automatic version checks with a safe rollback mechanism. Your server stays updated while you sleep."
-            delay={0.2}
+            delay={0.3}
           />
           <FeatureCard 
             icon={Terminal} 
             title="ASYNC CORE" 
-            description="Zero impact on TPS. All chunk generation and database operations are offloaded to secondary threads."
-            delay={0.3}
+            description="Zero impact on TPS. All chunk generation and database operations offloaded to secondary threads."
+            delay={0.4}
           />
         </div>
       </section>
