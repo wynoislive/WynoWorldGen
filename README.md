@@ -21,13 +21,28 @@
 
 ---
 
-## ✨ Overview
+## ✨ What is WynoWorldGen?
 
 **WynoWorldGen** is a professional-grade world management solution for Minecraft servers. It allows you to create multiple, difficulty-specific survival environments (`EASY`, `MEDIUM`, `HARD`) that are completely isolated from one another. Each environment includes its own private Overworld, Nether, and End dimensions.
 
 ---
 
-## 🚀 Companion World System
+## 🚀 Feature Highlights
+
+- **🚀 Professional Scaling**: Built with an asynchronous data pipeline. All database operations happen in the background, keeping your server at a consistent 20 TPS.
+- **🌌 Dimensional Unity (v6.2+)**: Private Nether and End dimensions for every world. Shared inventory and health across all three dimensions of a mode.
+- **📍 Native Persistence**: Last-location tracking. Join back exactly where you left off, even in the Nether or End.
+- **🛡️ Data Isolation 2.0**: Prevents all forms of data-bleed. Inventories, XP, potion effects, and **detailed advancement criteria** are saved per-world.
+- **🔄 Auto-Updater & Rollback**: Built-in system to keep your plugin up-to-date with one command, featuring automatic backups for 100% safe rollbacks.
+- **📁 Universal Database Support**: 
+  - **SQLite (Default)**: Zero-config! Auto-creates a local database for small servers.
+  - **MySQL Enterprise**: Fully compatible with MySQL/MariaDB for high-traffic environments using HikariCP pooling.
+- **🌍 Advanced Generation**: Supports standard all-biome generation and a specialized `tight` mode for rapid biome access.
+- **🎨 100% Translatable**: Every message, prefix, and color is managed in a professional `messages.yml`.
+
+---
+
+## 🌍 Companion World System
 
 When you create a Featured World, the plugin automatically creates private dimensions:
 
@@ -37,22 +52,25 @@ When you create a Featured World, the plugin automatically creates private dimen
 | **Medium** | `MediumWorld` | `MediumWorld-nether` | `MediumWorld-end` |
 | **Hard** | `HardWorld` | `HardWorld-nether` | `HardWorld-end` |
 
-*   **Native Persistence**: Your inventory, health, and location are saved exactly where you leave them. Join back and you're right where you left off.
-*   **Dimensional Unity**: Moving between Overworld, Nether, and End is seamless. Your items and health carry over instantly as they do in vanilla.
-*   **Smart Respawn**: Dying in the Nether or End sends you back to your Bed Spawn in the parent Overworld.
-*   **Automated Lifecycle**: Companion worlds are created, loaded, and deleted automatically with the parent world.
+- **Smart Respawn**: Dying in the Nether or End sends you back to your Bed Spawn in the parent Overworld.
+- **Smooth Portals**: Seamless transition between dimensions with zero sync lag.
 
-### 🔒 Data Isolation 2.0
-Each Mode (`Easy`, `Medium`, `Hard`) is a distinct data silo. A player's progress in one does not affect the other. Isolated data includes:
-*   Inventory, Armor, and Ender Chest.
-*   Health, Food, Saturation, and XP levels.
-*   Active Potion Effects and GameMode.
-*   Detailed Advancement Criteria.
+---
 
-### ⚡ Technical Excellence
-*   **Async Core**: All database I/O is offloaded to background threads. Your main thread remains at 20 TPS.
-*   **HikariCP Connection Pool**: High-performance MySQL/MariaDB management.
-*   **Safe-Teleport**: Built-in damage invulnerability buffer during world transitions.
+## 🛠 Commands & Usage
+
+| Command | Description | Permission |
+|:---|:---|:---|
+| `/fw join <name>` | Joins a featured world and restores last location. | `wynogen.use` |
+| `/fw exit` | Safely saves featured data and returns you home. | `wynogen.use` |
+| `/fw list` | Lists all active featured worlds and dimension status. | `wynogen.use` |
+| `/fw create <n> <d> [t]`| Creates a world (Easy/Medium/Hard). | `wynogen.admin` |
+| `/fw delete <name>` | Unloads and recursively deletes a world & companions. | `wynogen.admin` |
+| `/fw reload` | Reloads configurations and messages. | `wynogen.admin` |
+| `/fw update` | Checks and installs the latest plugin version. | `wynogen.admin` |
+| `/fw rollback` | Reverts the plugin to the previous backup JAR. | `wynogen.admin` |
+
+*Aliases: `/featuredworld` | `/fw`*
 
 ---
 
@@ -68,22 +86,7 @@ Drop in the new JAR and restart. The plugin reads your existing `worlds.yml` and
 
 ---
 
-## 🛠 Commands & Usage
-
-| Command | Usage Example | Permission |
-|:---|:---|:---|
-| `/fw join <name>` | `/fw join Survival_1` | `wynogen.use` |
-| `/fw exit` | Returns you to the main spawn. | `wynogen.use` |
-| `/fw list` | View all active modes and dimension status. | `wynogen.use` |
-| `/fw create <n> <d> [t]` | `/fw create HardSMP HARD tight` | `wynogen.admin` |
-| `/fw delete <name>` | Permanently unloads and deletes data. | `wynogen.admin` |
-| `/fw reload` | Reload configurations and messages. | `wynogen.admin` |
-| `/fw update` | Downloads the latest version automatically. | `wynogen.admin` |
-| `/fw rollback` | Reverts to the previous backup JAR. | `wynogen.admin` |
-
----
-
-## ⚙️ Detailed Configuration (`config.yml`)
+## ⚙️ Configuration (`config.yml`)
 
 ```yaml
 options:
@@ -128,6 +131,27 @@ For advanced setup, developer API, and detailed localization guides:
 
 Join our developer community for real-time support:
 👉 **[Discord Support Server](https://discord.gg/9WJSP4Kqg4)**
+
+---
+
+## 📦 Changelog
+
+### v6.2.1 — Persistence & Respawn Update
+- **Shared Dimension Profiles**: Inventory and hearts are now shared between a world and its companions.
+- **Last Location Persistence**: Players now join back at their exact last location (X, Y, Z).
+- **Advanced Respawn**: Die in Nether/End -> Respawn in Overworld (Bed spawn supported).
+- **Smooth Portals**: Direct teleportation between dimensions with no sync delay.
+
+### v6.2.0
+- Companion world auto-generation on `/fw create`.
+- Smart portal routing to private companion dimensions.
+- 4 new granular config options for portal/generation control.
+
+### v5.1.0
+- Auto-Updater & Rollback system.
+- MySQL support via HikariCP connection pooling.
+- Advancement criteria isolation across worlds.
+- Optimized `WynoBiomeProvider` for tight biome generation.
 
 ---
 
