@@ -98,7 +98,7 @@ const LoadingScreen = ({ onStarted }) => {
       )}
 
       <div className="absolute bottom-8 text-white/20 text-[10px] tracking-widest">
-        SYSTEM READY // WYNO-OS CORE 6.2.0
+        SYSTEM READY // WYNO-OS CORE 6.2.1
       </div>
     </div>
   );

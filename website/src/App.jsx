@@ -149,7 +149,7 @@ const App = () => {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan"></span>
             </span>
-            <span>Version 6.2.0 Released</span>
+            <span>Version 6.2.1 Released</span>
           </div>
           
           <h1 className="text-6xl md:text-9xl font-extrabold font-outfit tracking-tighter mb-8 leading-none">
@@ -226,9 +226,9 @@ const App = () => {
             delay={0.3}
           />
           <FeatureCard 
-            icon={Terminal} 
-            title="ASYNC CORE" 
-            description="Zero impact on TPS. All chunk generation and database operations offloaded to secondary threads."
+            icon={GitBranch} 
+            title="NATIVE PERSISTENCE" 
+            description="Last-location tracking and shared dimension profiles. Join back exactly where you left off."
             delay={0.4}
           />
         </div>
