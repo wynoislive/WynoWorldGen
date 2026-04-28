@@ -19,7 +19,7 @@ commands:
     failed: "&cFailed to create world. It might already exist."
   delete:
     usage: "&7To delete a world, use: &b/fw delete <name>"
-    success: "&cWorld '&f{name}&c' has been deleted."
+    success: "&cWorld '&f{name}&c' and its companion worlds have been deleted."
     failed: "&cCould not delete world '&f{name}&c'. Is it a featured world?"
   join:
     usage: "&7To join a world, use: &b/fw join <name>"
@@ -45,6 +45,15 @@ commands:
 
 world:
   portals-disabled: "&cPortals are disabled in featured worlds. Use &b/fw exit &cto leave."
+  nether-portals-disabled: "&cNether portals are disabled in featured worlds. Use &b/fw exit &cto leave."
+  end-portals-disabled: "&cEnd portals are disabled in featured worlds. Use &b/fw exit &cto leave."
+  companion-created: "&7Companion worlds: &b{nether} &8| &b{end} &7have been created."
+  companion-nether-only: "&7Companion world: &b{nether} &7has been created. &8(End disabled)"
+  companion-end-only: "&7Companion world: &b{end} &7has been created. &8(Nether disabled)"
+  companion-deleted: "&7Companion worlds have also been removed."
+  teleporting-nether: "&eTeleporting to the Nether... &7(Data syncing)"
+  teleporting-end: "&eTeleporting to the End... &7(Data syncing)"
+  teleporting-overworld: "&eTeleporting back to the overworld... &7(Data syncing)"
 
 update:
   checking: "&eChecking for updates..."

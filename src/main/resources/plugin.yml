@@ -1,5 +1,5 @@
 name: WYNO_GEN
-version: 5.1.0
+version: 6.2.0
 main: me.wyno.wynogen.WynoGen
 api-version: '1.20'
 softdepend: [ViaVersion, ViaBackwards, ViaRewind, Geyser-Spigot, floodgate]

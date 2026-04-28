@@ -67,7 +67,8 @@ public class WynoGen extends JavaPlugin {
             getLogger().info("Running scheduled auto-save for all online players...");
             for (org.bukkit.entity.Player player : Bukkit.getOnlinePlayers()) {
                 String worldName = player.getWorld().getName();
-                String id = getWorldManager().isFeaturedWorld(worldName) ? worldName : "default";
+                // isManagedWorld covers both parent Featured Worlds AND companion Nether/End worlds
+                String id = getWorldManager().isManagedWorld(worldName) ? worldName : "default";
                 getDataManager().savePlayerData(player, id);
             }
         }, interval, interval);

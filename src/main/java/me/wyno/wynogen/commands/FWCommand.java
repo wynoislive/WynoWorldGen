@@ -2,6 +2,7 @@ package me.wyno.wynogen.commands;
 
 import me.wyno.wynogen.WynoGen;
 import me.wyno.wynogen.managers.LanguageManager;
+import me.wyno.wynogen.managers.WorldManager;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.command.Command;
@@ -22,7 +23,7 @@ public class FWCommand implements CommandExecutor, TabCompleter {
 
     public FWCommand(WynoGen plugin) {
         this.plugin = plugin;
-        this.lang = plugin.getLanguageManager();
+        this.lang   = plugin.getLanguageManager();
     }
 
     @Override
@@ -40,19 +41,23 @@ public class FWCommand implements CommandExecutor, TabCompleter {
         String subCommand = args[0].toLowerCase();
 
         switch (subCommand) {
-            case "create" -> handleCreate(player, args);
-            case "delete" -> handleDelete(player, args);
-            case "join" -> handleJoin(player, args);
-            case "exit" -> handleExit(player);
-            case "list" -> handleList(player);
-            case "reload" -> handleReload(player);
-            case "update" -> handleUpdate(player);
+            case "create"   -> handleCreate(player, args);
+            case "delete"   -> handleDelete(player, args);
+            case "join"     -> handleJoin(player, args);
+            case "exit"     -> handleExit(player);
+            case "list"     -> handleList(player);
+            case "reload"   -> handleReload(player);
+            case "update"   -> handleUpdate(player);
             case "rollback" -> handleRollback(player);
-            default -> sendHelp(player);
+            default         -> sendHelp(player);
         }
 
         return true;
     }
+
+    // =========================================================================
+    // /fw create <name> <difficulty> [tight]
+    // =========================================================================
 
     private void handleCreate(Player player, String[] args) {
         if (!player.hasPermission("wynogen.admin")) {
@@ -65,28 +70,61 @@ public class FWCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        String name = args[1];
+        String name       = args[1];
         String difficulty = args[2].toUpperCase();
-        boolean tight = args.length >= 4 && args[3].equalsIgnoreCase("tight");
+        boolean tight     = args.length >= 4 && args[3].equalsIgnoreCase("tight");
 
         if (!Arrays.asList("EASY", "MEDIUM", "HARD").contains(difficulty)) {
             player.sendMessage(lang.getMessage("commands.create.invalid-difficulty"));
             return;
         }
 
-        String tightMsg = tight ? " &8[&dTight Biomes&8]" : "";
+        String tightMsg = tight ? " §8[§dTight Biomes§8]" : "";
         player.sendMessage(lang.getMessage("commands.create.starting")
                 .replace("{name}", name)
                 .replace("{difficulty}", difficulty)
                 .replace("{tight}", tightMsg));
-        
+
         boolean success = plugin.getWorldManager().createWorld(name, difficulty, tight, true);
+
         if (success) {
             player.sendMessage(lang.getMessage("commands.create.success").replace("{name}", name));
+
+            // --- Companion world feedback ---
+            sendCompanionCreatedMessage(player, name);
         } else {
             player.sendMessage(lang.getMessage("commands.create.failed"));
         }
     }
+
+    /**
+     * Sends a message to the creator indicating which companion worlds were generated.
+     */
+    private void sendCompanionCreatedMessage(Player player, String parentName) {
+        WorldManager wm = plugin.getWorldManager();
+        WorldManager.WorldData data = wm.getWorldData(parentName);
+        if (data == null) return;
+
+        String netherName = data.netherWorldName;
+        String endName    = data.endWorldName;
+
+        if (netherName != null && endName != null) {
+            player.sendMessage(lang.getMessage("world.companion-created")
+                    .replace("{nether}", netherName)
+                    .replace("{end}", endName));
+        } else if (netherName != null) {
+            player.sendMessage(lang.getMessage("world.companion-nether-only")
+                    .replace("{nether}", netherName));
+        } else if (endName != null) {
+            player.sendMessage(lang.getMessage("world.companion-end-only")
+                    .replace("{end}", endName));
+        }
+        // If both are null (both disabled in config), no companion message shown
+    }
+
+    // =========================================================================
+    // /fw delete <name>
+    // =========================================================================
 
     private void handleDelete(Player player, String[] args) {
         if (!player.hasPermission("wynogen.admin")) {
@@ -102,10 +140,15 @@ public class FWCommand implements CommandExecutor, TabCompleter {
         String name = args[1];
         if (plugin.getWorldManager().deleteWorld(name)) {
             player.sendMessage(lang.getMessage("commands.delete.success").replace("{name}", name));
+            player.sendMessage(lang.getMessage("world.companion-deleted"));
         } else {
             player.sendMessage(lang.getMessage("commands.delete.failed").replace("{name}", name));
         }
     }
+
+    // =========================================================================
+    // /fw join <name>
+    // =========================================================================
 
     private void handleJoin(Player player, String[] args) {
         if (!player.hasPermission("wynogen.use")) {
@@ -118,8 +161,8 @@ public class FWCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        String name = args[1];
-        World targetWorld = Bukkit.getWorld(name);
+        String name        = args[1];
+        World targetWorld  = Bukkit.getWorld(name);
 
         if (targetWorld == null || !plugin.getWorldManager().isFeaturedWorld(name)) {
             player.sendMessage(lang.getMessage("general.world-not-found"));
@@ -127,22 +170,27 @@ public class FWCommand implements CommandExecutor, TabCompleter {
         }
 
         String currentWorld = player.getWorld().getName();
-        String currentId = plugin.getWorldManager().isFeaturedWorld(currentWorld) ? currentWorld : "default";
-        
+        String currentId    = plugin.getWorldManager().isManagedWorld(currentWorld)
+                ? currentWorld : "default";
+
         player.sendMessage(lang.getMessage("commands.join.preparing"));
 
-        // 1. Save current state
-        plugin.getDataManager().savePlayerData(player, currentId).thenRun(() -> {
-            // 2. Load new state
-            plugin.getDataManager().loadPlayerData(player, name).thenAccept(success -> {
-                Bukkit.getScheduler().runTask(plugin, () -> {
-                    player.teleport(targetWorld.getSpawnLocation());
-                    applySafety(player);
-                    player.sendMessage(lang.getMessage("commands.join.success").replace("{name}", name));
-                });
-            });
-        });
+        // 1. Save current state → 2. Load target state → 3. Teleport
+        plugin.getDataManager().savePlayerData(player, currentId).thenRun(() ->
+                plugin.getDataManager().loadPlayerData(player, name).thenAccept(found ->
+                        Bukkit.getScheduler().runTask(plugin, () -> {
+                            player.teleport(targetWorld.getSpawnLocation());
+                            applySafety(player);
+                            player.sendMessage(lang.getMessage("commands.join.success")
+                                    .replace("{name}", name));
+                        })
+                )
+        );
     }
+
+    // =========================================================================
+    // /fw exit
+    // =========================================================================
 
     private void handleExit(Player player) {
         if (!player.hasPermission("wynogen.use")) {
@@ -151,26 +199,45 @@ public class FWCommand implements CommandExecutor, TabCompleter {
         }
 
         String currentWorld = player.getWorld().getName();
-        if (!plugin.getWorldManager().isFeaturedWorld(currentWorld)) {
+        WorldManager wm     = plugin.getWorldManager();
+
+        // Allow exit from any managed world (parent or companion)
+        if (!wm.isManagedWorld(currentWorld)) {
             player.sendMessage(lang.getMessage("general.not-in-featured"));
             return;
         }
 
         player.sendMessage(lang.getMessage("commands.exit.preparing"));
 
-        // 1. Save featured state
-        plugin.getDataManager().savePlayerData(player, currentWorld).thenRun(() -> {
-            // 2. Load default state
-            plugin.getDataManager().loadPlayerData(player, "default").thenAccept(success -> {
-                Bukkit.getScheduler().runTask(plugin, () -> {
-                    World defaultWorld = Bukkit.getWorlds().get(0);
-                    player.teleport(player.getBedSpawnLocation() != null ? player.getBedSpawnLocation() : defaultWorld.getSpawnLocation());
-                    applySafety(player);
-                    player.sendMessage(lang.getMessage("commands.exit.success"));
-                });
-            });
-        });
+        // Save current world data, then load default profile
+        plugin.getDataManager().savePlayerData(player, currentWorld).thenRun(() ->
+                plugin.getDataManager().loadPlayerData(player, "default").thenAccept(found ->
+                        Bukkit.getScheduler().runTask(plugin, () -> {
+                            World defaultWorld = Bukkit.getWorlds().get(0);
+                            org.bukkit.Location spawn = player.getBedSpawnLocation();
+                            if (spawn == null || !spawn.getWorld().getName()
+                                    .equals(defaultWorld.getName())) {
+                                spawn = defaultWorld.getSpawnLocation();
+                            }
+                            player.teleport(spawn);
+                            applySafety(player);
+                            player.sendMessage(lang.getMessage("commands.exit.success"));
+                        })
+                )
+        );
     }
+
+    // =========================================================================
+    // /fw list
+    // =========================================================================
+
+    private void handleList(Player player) {
+        sendWorldList(player, null);
+    }
+
+    // =========================================================================
+    // /fw reload
+    // =========================================================================
 
     private void handleReload(Player player) {
         if (!player.hasPermission("wynogen.admin")) {
@@ -180,6 +247,10 @@ public class FWCommand implements CommandExecutor, TabCompleter {
         plugin.reloadPlugin();
         player.sendMessage(lang.getMessage("general.reloaded"));
     }
+
+    // =========================================================================
+    // /fw update
+    // =========================================================================
 
     private void handleUpdate(Player player) {
         if (!player.hasPermission("wynogen.admin")) {
@@ -197,11 +268,16 @@ public class FWCommand implements CommandExecutor, TabCompleter {
                 if (success) {
                     player.sendMessage(lang.getMessage("update.success"));
                 } else {
-                    player.sendMessage(lang.getMessage("update.error").replace("{error}", "Download failed or JAR locked."));
+                    player.sendMessage(lang.getMessage("update.error")
+                            .replace("{error}", "Download failed or JAR locked."));
                 }
             });
         });
     }
+
+    // =========================================================================
+    // /fw rollback
+    // =========================================================================
 
     private void handleRollback(Player player) {
         if (!player.hasPermission("wynogen.admin")) {
@@ -211,25 +287,37 @@ public class FWCommand implements CommandExecutor, TabCompleter {
         if (plugin.getUpdateManager().rollback()) {
             player.sendMessage(lang.getMessage("update.rollback-success"));
         } else {
-            player.sendMessage(lang.getMessage("update.error").replace("{error}", "No backup found or restoration failed."));
+            player.sendMessage(lang.getMessage("update.error")
+                    .replace("{error}", "No backup found or restoration failed."));
         }
     }
 
-    private void handleList(Player player) {
-        sendWorldList(player, null);
-    }
+    // =========================================================================
+    // Shared UI helpers
+    // =========================================================================
 
     private void sendWorldList(Player player, String subHeader) {
         List<String> worlds = plugin.getWorldManager().getFeaturedWorldNames();
         player.sendMessage(lang.getMessage("commands.list.header"));
         if (subHeader != null) player.sendMessage(subHeader);
-        
+
         if (worlds.isEmpty()) {
             player.sendMessage(lang.getMessage("commands.list.no-worlds"));
         } else {
             for (String worldName : worlds) {
-                // We don't track difficulty in the names list currently, but we can fetch it if needed
-                player.sendMessage(lang.getRawMessage("commands.list.item").replace("{name}", worldName).replace("{difficulty}", "Unknown"));
+                WorldManager.WorldData data = plugin.getWorldManager().getWorldData(worldName);
+                String diff = data != null ? data.difficultyStr : "UNKNOWN";
+
+                // Build companion status suffix
+                StringBuilder companions = new StringBuilder();
+                if (data != null) {
+                    if (data.netherWorldName != null) companions.append(" §8[§cN§8]");
+                    if (data.endWorldName    != null) companions.append(" §8[§5E§8]");
+                }
+
+                player.sendMessage(lang.getRawMessage("commands.list.item")
+                        .replace("{name}", worldName + companions)
+                        .replace("{difficulty}", diff));
             }
         }
         player.sendMessage(lang.getMessage("commands.list.footer"));
@@ -252,7 +340,8 @@ public class FWCommand implements CommandExecutor, TabCompleter {
 
     private void applySafety(Player player) {
         long duration = plugin.getConfig().getLong("options.safety_buffer_ticks", 60L);
-        player.setMetadata("wynogen_safety", new org.bukkit.metadata.FixedMetadataValue(plugin, true));
+        player.setMetadata("wynogen_safety",
+                new org.bukkit.metadata.FixedMetadataValue(plugin, true));
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (player.isOnline()) {
                 player.removeMetadata("wynogen_safety", plugin);
@@ -260,18 +349,20 @@ public class FWCommand implements CommandExecutor, TabCompleter {
         }, duration);
     }
 
+    // =========================================================================
+    // Tab completion
+    // =========================================================================
+
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args.length == 1) {
             List<String> subs = new ArrayList<>(Arrays.asList("join", "exit", "list"));
             if (sender.hasPermission("wynogen.admin")) {
-                subs.add("create");
-                subs.add("delete");
-                subs.add("reload");
-                subs.add("update");
-                subs.add("rollback");
+                subs.addAll(Arrays.asList("create", "delete", "reload", "update", "rollback"));
             }
-            return subs.stream().filter(s -> s.startsWith(args[0].toLowerCase())).collect(Collectors.toList());
+            return subs.stream()
+                    .filter(s -> s.startsWith(args[0].toLowerCase()))
+                    .collect(Collectors.toList());
         }
 
         if (args.length == 2) {

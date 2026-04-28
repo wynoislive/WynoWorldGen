@@ -21,11 +21,27 @@ options:
   # Teleport invulnerability duration (in ticks)
   safety_buffer_ticks: 60 # 3 seconds
   
-  # Disable portals (Nether/End) in featured worlds to prevent "pollution"
-  disable_portals: true
+  # Disable ALL portals (Nether/End) in featured worlds blindly.
+  # Set to false to use the granular controls below instead.
+  disable_portals: false
   
   # Stay in the same world after dying instead of returning to main world spawn / bed?
   respawn_in_same_world: true
+  
+  # --- Companion World Generation ---
+  # When a Featured World is created, automatically create a paired Nether world (<name>-nether).
+  generate_nether: true
+
+  # When a Featured World is created, automatically create a paired End world (<name>-end).
+  generate_end: true
+
+  # Disable Nether portals in featured worlds even if generate_nether is true.
+  # Players will see a message and be blocked. Set to false to allow nether portal travel.
+  disable_nether_portals: false
+
+  # Disable End portals in featured worlds even if generate_end is true.
+  # Players will see a message and be blocked. Set to false to allow end portal travel.
+  disable_end_portals: false
   
   # bStats helps developers track plugin usage anonymously.
   metrics: true
