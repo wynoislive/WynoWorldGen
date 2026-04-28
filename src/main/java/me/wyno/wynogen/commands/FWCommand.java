@@ -1,15 +1,17 @@
 package me.wyno.wynogen.commands;
 
 import me.wyno.wynogen.WynoGen;
-import me.wyno.wynogen.managers.LanguageManager;
+import me.wyno.wynogen.managers.DataManager;
 import me.wyno.wynogen.managers.WorldManager;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,17 +21,15 @@ import java.util.stream.Collectors;
 public class FWCommand implements CommandExecutor, TabCompleter {
 
     private final WynoGen plugin;
-    private final LanguageManager lang;
 
     public FWCommand(WynoGen plugin) {
         this.plugin = plugin;
-        this.lang   = plugin.getLanguageManager();
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(lang.getMessage("general.only-players"));
+            sender.sendMessage("Only players can use this command.");
             return true;
         }
 
@@ -38,354 +38,246 @@ public class FWCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        String subCommand = args[0].toLowerCase();
-
-        switch (subCommand) {
-            case "create"   -> handleCreate(player, args);
-            case "delete"   -> handleDelete(player, args);
-            case "join"     -> handleJoin(player, args);
-            case "exit"     -> handleExit(player);
-            case "list"     -> handleList(player);
-            case "reload"   -> handleReload(player);
-            case "update"   -> handleUpdate(player);
+        switch (args[0].toLowerCase()) {
+            case "join" -> handleJoin(player, args);
+            case "exit" -> handleExit(player);
+            case "list" -> handleList(player);
+            case "create" -> handleCreate(player, args);
+            case "delete" -> handleDelete(player, args);
+            case "reload" -> handleReload(player);
+            case "update" -> handleUpdate(player);
             case "rollback" -> handleRollback(player);
-            default         -> sendHelp(player);
+            default -> sendHelp(player);
         }
 
         return true;
     }
 
-    // =========================================================================
-    // /fw create <name> <difficulty> [tight]
-    // =========================================================================
-
-    private void handleCreate(Player player, String[] args) {
-        if (!player.hasPermission("wynogen.admin")) {
-            player.sendMessage(lang.getMessage("general.no-permission"));
-            return;
-        }
-
-        if (args.length < 3) {
-            player.sendMessage(lang.getMessage("commands.create.usage"));
-            return;
-        }
-
-        String name       = args[1];
-        String difficulty = args[2].toUpperCase();
-        boolean tight     = args.length >= 4 && args[3].equalsIgnoreCase("tight");
-
-        if (!Arrays.asList("EASY", "MEDIUM", "HARD").contains(difficulty)) {
-            player.sendMessage(lang.getMessage("commands.create.invalid-difficulty"));
-            return;
-        }
-
-        String tightMsg = tight ? " §8[§dTight Biomes§8]" : "";
-        player.sendMessage(lang.getMessage("commands.create.starting")
-                .replace("{name}", name)
-                .replace("{difficulty}", difficulty)
-                .replace("{tight}", tightMsg));
-
-        boolean success = plugin.getWorldManager().createWorld(name, difficulty, tight, true);
-
-        if (success) {
-            player.sendMessage(lang.getMessage("commands.create.success").replace("{name}", name));
-
-            // --- Companion world feedback ---
-            sendCompanionCreatedMessage(player, name);
-        } else {
-            player.sendMessage(lang.getMessage("commands.create.failed"));
-        }
-    }
-
-    /**
-     * Sends a message to the creator indicating which companion worlds were generated.
-     */
-    private void sendCompanionCreatedMessage(Player player, String parentName) {
-        WorldManager wm = plugin.getWorldManager();
-        WorldManager.WorldData data = wm.getWorldData(parentName);
-        if (data == null) return;
-
-        String netherName = data.netherWorldName;
-        String endName    = data.endWorldName;
-
-        if (netherName != null && endName != null) {
-            player.sendMessage(lang.getMessage("world.companion-created")
-                    .replace("{nether}", netherName)
-                    .replace("{end}", endName));
-        } else if (netherName != null) {
-            player.sendMessage(lang.getMessage("world.companion-nether-only")
-                    .replace("{nether}", netherName));
-        } else if (endName != null) {
-            player.sendMessage(lang.getMessage("world.companion-end-only")
-                    .replace("{end}", endName));
-        }
-        // If both are null (both disabled in config), no companion message shown
-    }
-
-    // =========================================================================
-    // /fw delete <name>
-    // =========================================================================
-
-    private void handleDelete(Player player, String[] args) {
-        if (!player.hasPermission("wynogen.admin")) {
-            player.sendMessage(lang.getMessage("general.no-permission"));
-            return;
-        }
-
-        if (args.length < 2) {
-            sendWorldList(player, lang.getRawMessage("commands.delete.usage"));
-            return;
-        }
-
-        String name = args[1];
-        if (plugin.getWorldManager().deleteWorld(name)) {
-            player.sendMessage(lang.getMessage("commands.delete.success").replace("{name}", name));
-            player.sendMessage(lang.getMessage("world.companion-deleted"));
-        } else {
-            player.sendMessage(lang.getMessage("commands.delete.failed").replace("{name}", name));
-        }
-    }
-
-    // =========================================================================
-    // /fw join <name>
-    // =========================================================================
-
     private void handleJoin(Player player, String[] args) {
         if (!player.hasPermission("wynogen.use")) {
-            player.sendMessage(lang.getMessage("general.no-permission"));
+            player.sendMessage(plugin.getLanguageManager().getMessage("general.no-permission"));
             return;
         }
 
         if (args.length < 2) {
-            sendWorldList(player, lang.getRawMessage("commands.join.usage"));
+            player.sendMessage(plugin.getLanguageManager().getMessage("commands.join.usage"));
             return;
         }
 
-        String name        = args[1];
-        World targetWorld  = Bukkit.getWorld(name);
+        String worldName = args[1];
+        World targetWorld = Bukkit.getWorld(worldName);
 
-        if (targetWorld == null || !plugin.getWorldManager().isFeaturedWorld(name)) {
-            player.sendMessage(lang.getMessage("general.world-not-found"));
+        if (targetWorld == null || !plugin.getWorldManager().isFeaturedWorld(worldName)) {
+            player.sendMessage(plugin.getLanguageManager().getMessage("commands.join.not-found"));
             return;
         }
 
-        String currentWorld = player.getWorld().getName();
-        String currentId    = plugin.getWorldManager().isManagedWorld(currentWorld)
-                ? currentWorld : "default";
-
-        player.sendMessage(lang.getMessage("commands.join.preparing"));
-
-        // 1. Save current state → 2. Load target state → 3. Teleport
-        plugin.getDataManager().savePlayerData(player, currentId).thenRun(() ->
-                plugin.getDataManager().loadPlayerData(player, name).thenAccept(found ->
-                        Bukkit.getScheduler().runTask(plugin, () -> {
+        // Save current data (default world data) before moving
+        plugin.getDataManager().savePlayerData(player, player.getWorld().getName()).thenRun(() -> {
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                // Load target world data
+                plugin.getDataManager().loadPlayerData(player, worldName).thenAccept(snapshot -> {
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        Location lastLoc = (snapshot != null) ? snapshot.getBukkitLocation() : null;
+                        
+                        // If we have a last location in the target world (or its companions), use it!
+                        if (lastLoc != null) {
+                            player.teleport(lastLoc);
+                        } else {
+                            // Fallback to default spawn
                             player.teleport(targetWorld.getSpawnLocation());
-                            applySafety(player);
-                            player.sendMessage(lang.getMessage("commands.join.success")
-                                    .replace("{name}", name));
-                        })
-                )
-        );
-    }
-
-    // =========================================================================
-    // /fw exit
-    // =========================================================================
-
-    private void handleExit(Player player) {
-        if (!player.hasPermission("wynogen.use")) {
-            player.sendMessage(lang.getMessage("general.no-permission"));
-            return;
-        }
-
-        String currentWorld = player.getWorld().getName();
-        WorldManager wm     = plugin.getWorldManager();
-
-        // Allow exit from any managed world (parent or companion)
-        if (!wm.isManagedWorld(currentWorld)) {
-            player.sendMessage(lang.getMessage("general.not-in-featured"));
-            return;
-        }
-
-        player.sendMessage(lang.getMessage("commands.exit.preparing"));
-
-        // Save current world data, then load default profile
-        plugin.getDataManager().savePlayerData(player, currentWorld).thenRun(() ->
-                plugin.getDataManager().loadPlayerData(player, "default").thenAccept(found ->
-                        Bukkit.getScheduler().runTask(plugin, () -> {
-                            World defaultWorld = Bukkit.getWorlds().get(0);
-                            org.bukkit.Location spawn = player.getBedSpawnLocation();
-                            if (spawn == null || !spawn.getWorld().getName()
-                                    .equals(defaultWorld.getName())) {
-                                spawn = defaultWorld.getSpawnLocation();
-                            }
-                            player.teleport(spawn);
-                            applySafety(player);
-                            player.sendMessage(lang.getMessage("commands.exit.success"));
-                        })
-                )
-        );
-    }
-
-    // =========================================================================
-    // /fw list
-    // =========================================================================
-
-    private void handleList(Player player) {
-        sendWorldList(player, null);
-    }
-
-    // =========================================================================
-    // /fw reload
-    // =========================================================================
-
-    private void handleReload(Player player) {
-        if (!player.hasPermission("wynogen.admin")) {
-            player.sendMessage(lang.getMessage("general.no-permission"));
-            return;
-        }
-        plugin.reloadPlugin();
-        player.sendMessage(lang.getMessage("general.reloaded"));
-    }
-
-    // =========================================================================
-    // /fw update
-    // =========================================================================
-
-    private void handleUpdate(Player player) {
-        if (!player.hasPermission("wynogen.admin")) {
-            player.sendMessage(lang.getMessage("general.no-permission"));
-            return;
-        }
-        player.sendMessage(lang.getMessage("update.checking"));
-        plugin.getUpdateManager().checkForUpdates().thenAccept(available -> {
-            if (!available) {
-                player.sendMessage(lang.getPrefix() + "&cNo updates found.");
-                return;
-            }
-            player.sendMessage(lang.getMessage("update.downloading"));
-            plugin.getUpdateManager().downloadAndInstall().thenAccept(success -> {
-                if (success) {
-                    player.sendMessage(lang.getMessage("update.success"));
-                } else {
-                    player.sendMessage(lang.getMessage("update.error")
-                            .replace("{error}", "Download failed or JAR locked."));
-                }
+                        }
+                        
+                        player.sendMessage(plugin.getLanguageManager().getMessage("commands.join.success")
+                                .replace("{world}", worldName));
+                    });
+                });
             });
         });
     }
 
-    // =========================================================================
-    // /fw rollback
-    // =========================================================================
-
-    private void handleRollback(Player player) {
-        if (!player.hasPermission("wynogen.admin")) {
-            player.sendMessage(lang.getMessage("general.no-permission"));
+    private void handleExit(Player player) {
+        if (!player.hasPermission("wynogen.use")) {
+            player.sendMessage(plugin.getLanguageManager().getMessage("general.no-permission"));
             return;
         }
-        if (plugin.getUpdateManager().rollback()) {
-            player.sendMessage(lang.getMessage("update.rollback-success"));
-        } else {
-            player.sendMessage(lang.getMessage("update.error")
-                    .replace("{error}", "No backup found or restoration failed."));
+
+        String fromWorld = player.getWorld().getName();
+        if (!plugin.getWorldManager().isManagedWorld(fromWorld)) {
+            player.sendMessage(plugin.getLanguageManager().getMessage("commands.exit.not-in-featured"));
+            return;
+        }
+
+        World mainWorld = Bukkit.getWorlds().get(0);
+        
+        // Save featured world data (including current location)
+        plugin.getDataManager().savePlayerData(player, fromWorld).thenRun(() -> {
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                // Load default data
+                plugin.getDataManager().loadPlayerData(player, "default").thenRun(() -> {
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        player.teleport(mainWorld.getSpawnLocation());
+                        player.sendMessage(plugin.getLanguageManager().getMessage("commands.exit.success"));
+                    });
+                });
+            });
+        });
+    }
+
+    private void handleList(Player player) {
+        if (!player.hasPermission("wynogen.use")) {
+            player.sendMessage(plugin.getLanguageManager().getMessage("general.no-permission"));
+            return;
+        }
+
+        List<String> worlds = plugin.getWorldManager().getFeaturedWorldNames();
+        if (worlds.isEmpty()) {
+            player.sendMessage(plugin.getLanguageManager().getMessage("commands.list.empty"));
+            return;
+        }
+
+        player.sendMessage(plugin.getLanguageManager().getMessage("commands.list.header"));
+        for (String w : worlds) {
+            StringBuilder sb = new StringBuilder("§8 - §b" + w);
+            if (plugin.getWorldManager().getNetherWorld(w) != null) sb.append(" §4[N]");
+            if (plugin.getWorldManager().getEndWorld(w) != null) sb.append(" §d[E]");
+            player.sendMessage(sb.toString());
         }
     }
 
-    // =========================================================================
-    // Shared UI helpers
-    // =========================================================================
-
-    private void sendWorldList(Player player, String subHeader) {
-        List<String> worlds = plugin.getWorldManager().getFeaturedWorldNames();
-        player.sendMessage(lang.getMessage("commands.list.header"));
-        if (subHeader != null) player.sendMessage(subHeader);
-
-        if (worlds.isEmpty()) {
-            player.sendMessage(lang.getMessage("commands.list.no-worlds"));
-        } else {
-            for (String worldName : worlds) {
-                WorldManager.WorldData data = plugin.getWorldManager().getWorldData(worldName);
-                String diff = data != null ? data.difficultyStr : "UNKNOWN";
-
-                // Build companion status suffix
-                StringBuilder companions = new StringBuilder();
-                if (data != null) {
-                    if (data.netherWorldName != null) companions.append(" §8[§cN§8]");
-                    if (data.endWorldName    != null) companions.append(" §8[§5E§8]");
-                }
-
-                player.sendMessage(lang.getRawMessage("commands.list.item")
-                        .replace("{name}", worldName + companions)
-                        .replace("{difficulty}", diff));
-            }
+    private void handleCreate(Player player, String[] args) {
+        if (!player.hasPermission("wynogen.admin")) {
+            player.sendMessage(plugin.getLanguageManager().getMessage("general.no-permission"));
+            return;
         }
-        player.sendMessage(lang.getMessage("commands.list.footer"));
+
+        if (args.length < 3) {
+            player.sendMessage(plugin.getLanguageManager().getMessage("commands.create.usage"));
+            return;
+        }
+
+        String name = args[1];
+        String difficulty = args[2].toUpperCase();
+        boolean tight = args.length >= 4 && args[3].equalsIgnoreCase("tight");
+
+        if (!Arrays.asList("EASY", "MEDIUM", "HARD").contains(difficulty)) {
+            player.sendMessage(plugin.getLanguageManager().getMessage("commands.create.invalid-difficulty"));
+            return;
+        }
+
+        player.sendMessage(plugin.getLanguageManager().getMessage("commands.create.starting").replace("{world}", name));
+        
+        boolean success = plugin.getWorldManager().createWorld(name, difficulty, tight, true);
+        if (success) {
+            player.sendMessage(plugin.getLanguageManager().getMessage("commands.create.success").replace("{world}", name));
+            if (plugin.getConfig().getBoolean("options.generate_nether", true)) {
+                player.sendMessage(plugin.getLanguageManager().getMessage("world.companion-created").replace("{type}", "Nether"));
+            }
+            if (plugin.getConfig().getBoolean("options.generate_end", true)) {
+                player.sendMessage(plugin.getLanguageManager().getMessage("world.companion-created").replace("{type}", "End"));
+            }
+        } else {
+            player.sendMessage(plugin.getLanguageManager().getMessage("commands.create.error"));
+        }
+    }
+
+    private void handleDelete(Player player, String[] args) {
+        if (!player.hasPermission("wynogen.admin")) {
+            player.sendMessage(plugin.getLanguageManager().getMessage("general.no-permission"));
+            return;
+        }
+
+        if (args.length < 2) {
+            player.sendMessage(plugin.getLanguageManager().getMessage("commands.delete.usage"));
+            return;
+        }
+
+        String name = args[1];
+        if (!plugin.getWorldManager().isFeaturedWorld(name)) {
+            player.sendMessage(plugin.getLanguageManager().getMessage("commands.delete.not-found"));
+            return;
+        }
+
+        player.sendMessage(plugin.getLanguageManager().getMessage("commands.delete.starting").replace("{world}", name));
+        
+        if (plugin.getWorldManager().deleteWorld(name)) {
+            player.sendMessage(plugin.getLanguageManager().getMessage("commands.delete.success").replace("{world}", name));
+            player.sendMessage(plugin.getLanguageManager().getMessage("world.companion-deleted"));
+        } else {
+            player.sendMessage(plugin.getLanguageManager().getMessage("commands.delete.error"));
+        }
+    }
+
+    private void handleReload(Player player) {
+        if (!player.hasPermission("wynogen.admin")) {
+            player.sendMessage(plugin.getLanguageManager().getMessage("general.no-permission"));
+            return;
+        }
+        plugin.reloadConfig();
+        plugin.getLanguageManager().reload();
+        player.sendMessage(plugin.getLanguageManager().getMessage("commands.reload.success"));
+    }
+
+    private void handleUpdate(Player player) {
+        if (!player.hasPermission("wynogen.admin")) return;
+        player.sendMessage("§bChecking for updates...");
+        plugin.getUpdateManager().checkForUpdates().thenAccept(available -> {
+            if (available) {
+                player.sendMessage("§eNew version found! Installing...");
+                plugin.getUpdateManager().downloadAndInstall().thenAccept(success -> {
+                    if (success) {
+                        player.sendMessage("§aUpdate installed! Restart the server to apply.");
+                    } else {
+                        player.sendMessage("§cUpdate failed. Check console.");
+                    }
+                });
+            } else {
+                player.sendMessage("§aYou are on the latest version.");
+            }
+        });
+    }
+
+    private void handleRollback(Player player) {
+        if (!player.hasPermission("wynogen.admin")) return;
+        if (plugin.getUpdateManager().rollback()) {
+            player.sendMessage("§aRollback successful! Restart to revert to previous version.");
+        } else {
+            player.sendMessage("§cNo backup found or rollback failed.");
+        }
     }
 
     private void sendHelp(Player player) {
-        player.sendMessage(lang.getMessage("commands.help.header"));
-        player.sendMessage(lang.getRawMessage("commands.help.join"));
-        player.sendMessage(lang.getRawMessage("commands.help.list"));
-        player.sendMessage(lang.getRawMessage("commands.help.exit"));
+        player.sendMessage("§8§m----------------------------------");
+        player.sendMessage("§b§lWYNO WORLDGEN §7- §fCommands");
+        player.sendMessage("§b/fw join <world> §7- Join a featured world");
+        player.sendMessage("§b/fw exit §7- Leave featured world");
+        player.sendMessage("§b/fw list §7- Show all worlds");
         if (player.hasPermission("wynogen.admin")) {
-            player.sendMessage(lang.getRawMessage("commands.help.create"));
-            player.sendMessage(lang.getRawMessage("commands.help.delete"));
-            player.sendMessage(lang.getRawMessage("commands.help.reload"));
-            player.sendMessage("§b/fw update §7- Install the latest update");
-            player.sendMessage("§b/fw rollback §7- Revert to previous JAR");
+            player.sendMessage("§b/fw create <n> <diff> [tight] §7- Create world");
+            player.sendMessage("§b/fw delete <name> §7- Delete world");
+            player.sendMessage("§b/fw reload §7- Reload config");
+            player.sendMessage("§b/fw update §7- Update plugin");
         }
-        player.sendMessage(lang.getMessage("commands.help.footer"));
+        player.sendMessage("§8§m----------------------------------");
     }
-
-    private void applySafety(Player player) {
-        long duration = plugin.getConfig().getLong("options.safety_buffer_ticks", 60L);
-        player.setMetadata("wynogen_safety",
-                new org.bukkit.metadata.FixedMetadataValue(plugin, true));
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            if (player.isOnline()) {
-                player.removeMetadata("wynogen_safety", plugin);
-            }
-        }, duration);
-    }
-
-    // =========================================================================
-    // Tab completion
-    // =========================================================================
 
     @Override
-    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+    public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
         if (args.length == 1) {
-            List<String> subs = new ArrayList<>(Arrays.asList("join", "exit", "list"));
+            List<String> list = new ArrayList<>(Arrays.asList("join", "exit", "list"));
             if (sender.hasPermission("wynogen.admin")) {
-                subs.addAll(Arrays.asList("create", "delete", "reload", "update", "rollback"));
+                list.addAll(Arrays.asList("create", "delete", "reload", "update", "rollback"));
             }
-            return subs.stream()
-                    .filter(s -> s.startsWith(args[0].toLowerCase()))
-                    .collect(Collectors.toList());
+            return list.stream().filter(s -> s.startsWith(args[0].toLowerCase())).collect(Collectors.toList());
         }
-
         if (args.length == 2) {
-            String sub = args[0].toLowerCase();
-            if (sub.equals("join") || sub.equals("delete")) {
-                return plugin.getWorldManager().getFeaturedWorldNames().stream()
-                        .filter(s -> s.toLowerCase().startsWith(args[1].toLowerCase()))
-                        .collect(Collectors.toList());
+            if (args[0].equalsIgnoreCase("join") || args[0].equalsIgnoreCase("delete")) {
+                return plugin.getWorldManager().getFeaturedWorldNames().stream().filter(s -> s.startsWith(args[1].toLowerCase())).collect(Collectors.toList());
             }
         }
-
         if (args.length == 3 && args[0].equalsIgnoreCase("create")) {
-            return Arrays.asList("EASY", "MEDIUM", "HARD").stream()
-                    .filter(s -> s.toLowerCase().startsWith(args[2].toLowerCase()))
-                    .collect(Collectors.toList());
+            return Arrays.asList("EASY", "MEDIUM", "HARD").stream().filter(s -> s.startsWith(args[2].toUpperCase())).collect(Collectors.toList());
         }
-
-        if (args.length == 4 && args[0].equalsIgnoreCase("create")) {
-            return Arrays.asList("tight").stream()
-                    .filter(s -> s.toLowerCase().startsWith(args[3].toLowerCase()))
-                    .collect(Collectors.toList());
-        }
-
         return new ArrayList<>();
     }
 }

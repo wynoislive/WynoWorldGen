@@ -3,7 +3,9 @@ package me.wyno.wynogen.managers;
 import me.wyno.wynogen.WynoGen;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
+import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
+import org.bukkit.World;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.advancement.AdvancementProgress;
 import org.bukkit.attribute.Attribute;
@@ -32,10 +34,22 @@ public class DataManager {
     }
 
     /**
-     * Asynchronously saves player data to MySQL.
+     * Resolves the correct world identifier for data isolation.
+     * Dimensions (Nether/End) share the same profile as their Parent Overworld.
      */
-    public CompletableFuture<Void> savePlayerData(Player player, String identifier) {
+    private String resolveDataId(String worldName) {
+        if (plugin.getWorldManager().isCompanionWorld(worldName)) {
+            return plugin.getWorldManager().getParentWorldName(worldName);
+        }
+        return worldName;
+    }
+
+    /**
+     * Asynchronously saves player data to the database.
+     */
+    public CompletableFuture<Void> savePlayerData(Player player, String rawIdentifier) {
         String uuid = player.getUniqueId().toString();
+        String identifier = resolveDataId(rawIdentifier);
         
         // Capture data on the main thread
         String inv = serializeItems(player.getInventory().getContents());
@@ -44,6 +58,7 @@ public class DataManager {
         String stats = serializeStats(player);
         String potions = serializePotions(player.getActivePotionEffects());
         String adv = serializeAdvancements(player);
+        String loc = serializeLocation(player.getLocation()); // Capture location
 
         return CompletableFuture.runAsync(() -> {
             try (Connection conn = plugin.getDatabaseManager().getConnection()) {
@@ -58,6 +73,7 @@ public class DataManager {
                     pstmt.setString(6, stats);
                     pstmt.setString(7, potions);
                     pstmt.setString(8, adv);
+                    pstmt.setString(9, loc);
                     pstmt.executeUpdate();
                 }
             } catch (SQLException e) {
@@ -67,10 +83,12 @@ public class DataManager {
     }
 
     /**
-     * Asynchronously loads player data from MySQL and applies it to the player on the main thread.
+     * Asynchronously loads player data from the database.
+     * Returns the loaded Snapshot containing location data.
      */
-    public CompletableFuture<Boolean> loadPlayerData(Player player, String identifier) {
+    public CompletableFuture<PlayerDataSnapshot> loadPlayerData(Player player, String rawIdentifier) {
         String uuid = player.getUniqueId().toString();
+        String identifier = resolveDataId(rawIdentifier);
 
         return CompletableFuture.supplyAsync(() -> {
             try (Connection conn = plugin.getDatabaseManager().getConnection()) {
@@ -84,19 +102,19 @@ public class DataManager {
                             PlayerDataSnapshot snapshot = new PlayerDataSnapshot(rs);
                             // Schedule application on main thread
                             Bukkit.getScheduler().runTask(plugin, () -> applySnapshot(player, snapshot));
-                            return true;
+                            return snapshot;
                         }
                     }
                 }
             } catch (SQLException e) {
                 plugin.getLogger().severe("Async MySQL Load Error for " + player.getName() + ": " + e.getMessage());
             }
-            return false;
-        }).thenApply(found -> {
-            if (!found && !identifier.equalsIgnoreCase("default")) {
+            return null;
+        }).thenApply(snapshot -> {
+            if (snapshot == null && !identifier.equalsIgnoreCase("default")) {
                 Bukkit.getScheduler().runTask(plugin, () -> resetPlayerState(player));
             }
-            return found;
+            return snapshot;
         });
     }
 
@@ -117,10 +135,11 @@ public class DataManager {
         }
         
         applyAdvancements(player, snapshot.advancements);
+        // Note: Location is applied by the calling command/listener to ensure safe teleport timing
     }
 
-    private static class PlayerDataSnapshot {
-        final String inventory, armor, enderChest, stats, potions, advancements;
+    public static class PlayerDataSnapshot {
+        public final String inventory, armor, enderChest, stats, potions, advancements, lastLocation;
         PlayerDataSnapshot(ResultSet rs) throws SQLException {
             this.inventory = rs.getString("inventory");
             this.armor = rs.getString("armor");
@@ -128,10 +147,38 @@ public class DataManager {
             this.stats = rs.getString("stats");
             this.potions = rs.getString("potions");
             this.advancements = rs.getString("advancements");
+            this.lastLocation = rs.getString("last_location");
+        }
+
+        public Location getBukkitLocation() {
+            if (lastLocation == null || lastLocation.isEmpty()) return null;
+            try {
+                String[] parts = lastLocation.split(";");
+                World world = Bukkit.getWorld(parts[0]);
+                if (world == null) return null;
+                double x = Double.parseDouble(parts[1]);
+                double y = Double.parseDouble(parts[2]);
+                double z = Double.parseDouble(parts[3]);
+                float yaw = Float.parseFloat(parts[4]);
+                float pitch = Float.parseFloat(parts[5]);
+                return new Location(world, x, y, z, yaw, pitch);
+            } catch (Exception e) {
+                return null;
+            }
         }
     }
 
-    // --- Serialization Helpers (Same as before but clarified for professional use) ---
+    // --- Serialization Helpers ---
+
+    private String serializeLocation(Location loc) {
+        if (loc == null) return "";
+        return loc.getWorld().getName() + ";" + 
+               loc.getX() + ";" + 
+               loc.getY() + ";" + 
+               loc.getZ() + ";" + 
+               loc.getYaw() + ";" + 
+               loc.getPitch();
+    }
 
     private String serializeItems(ItemStack[] items) {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();

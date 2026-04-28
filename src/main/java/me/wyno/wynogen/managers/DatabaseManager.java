@@ -73,11 +73,18 @@ public class DatabaseManager {
                 "stats TEXT, " +
                 "potions TEXT, " +
                 "advancements LONGTEXT, " +
+                "last_location TEXT, " + // Added last_location column
                 "PRIMARY KEY (uuid, world_id)" +
                 ");";
 
         try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
             stmt.execute(sql);
+            
+            // Migration: Add column if it doesn't exist (for existing databases)
+            try {
+                stmt.execute("ALTER TABLE player_data ADD COLUMN last_location TEXT;");
+            } catch (SQLException ignored) {} 
+            
         } catch (SQLException e) {
             plugin.getLogger().severe("Could not create database tables!");
             e.printStackTrace();
@@ -95,26 +102,28 @@ public class DatabaseManager {
 
     public String getUpsertSQL() {
         if (isMySQL) {
-            return "INSERT INTO player_data (uuid, world_id, inventory, armor, ender_chest, stats, potions, advancements) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?) " +
+            return "INSERT INTO player_data (uuid, world_id, inventory, armor, ender_chest, stats, potions, advancements, last_location) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) " +
                     "ON DUPLICATE KEY UPDATE " +
                     "inventory = VALUES(inventory), " +
                     "armor = VALUES(armor), " +
                     "ender_chest = VALUES(ender_chest), " +
                     "stats = VALUES(stats), " +
                     "potions = VALUES(potions), " +
-                    "advancements = VALUES(advancements);";
+                    "advancements = VALUES(advancements), " +
+                    "last_location = VALUES(last_location);";
         } else {
             // SQLite Syntax
-            return "INSERT INTO player_data (uuid, world_id, inventory, armor, ender_chest, stats, potions, advancements) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?) " +
+            return "INSERT INTO player_data (uuid, world_id, inventory, armor, ender_chest, stats, potions, advancements, last_location) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) " +
                     "ON CONFLICT(uuid, world_id) DO UPDATE SET " +
                     "inventory = EXCLUDED.inventory, " +
                     "armor = EXCLUDED.armor, " +
                     "ender_chest = EXCLUDED.ender_chest, " +
                     "stats = EXCLUDED.stats, " +
                     "potions = EXCLUDED.potions, " +
-                    "advancements = EXCLUDED.advancements;";
+                    "advancements = EXCLUDED.advancements, " +
+                    "last_location = EXCLUDED.last_location;";
         }
     }
 
