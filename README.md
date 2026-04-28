@@ -21,104 +21,115 @@
 
 ---
 
-## ✨ What is WynoWorldGen?
+## ✨ Overview
 
-**WynoWorldGen** is a professional Minecraft Java plugin built for servers that run **multiple difficulty-based survival worlds**. Every Featured World created by the plugin is a completely isolated environment — inventory, XP, advancements, potion effects, and now **Nether & End dimensions** are all scoped per-world with zero data bleed between them.
-
----
-
-## 🚀 Feature Highlights
-
-### 🌍 Companion World System *(v6.2+)*
-When you create a Featured World, the plugin automatically creates **private Nether and End dimensions** for it:
-
-| Featured World | Auto-Created Companions |
-|:---|:---|
-| `EasyWorld` | `EasyWorld-nether` + `EasyWorld-end` |
-| `MediumWorld` | `MediumWorld-nether` + `MediumWorld-end` |
-| `HardSMP` | `HardSMP-nether` + `HardSMP-end` |
-
-- **Shared Dimension Profiles**: Your inventory and health are identical across the Overworld, Nether, and End of the same mode.
-- **Last Location Persistence**: Join back exactly where you left. If you exit in the Nether, you join back in the Nether.
-- **Overworld Respawn**: Dying in the Nether or End will correctly respawn you in the **parent overworld** (respecting your bed spawn).
-- **Smooth Portals**: Seamless transition between dimensions with no data-sync lag.
+**WynoWorldGen** is a professional-grade world management solution for Minecraft servers. It allows you to create multiple, difficulty-specific survival environments (`EASY`, `MEDIUM`, `HARD`) that are completely isolated from one another. Each environment includes its own private Overworld, Nether, and End dimensions.
 
 ---
+
+## 🚀 Pro Features
+
+### 🌍 Companion World System (The Multiverse)
+Every world created is a "Mode" containing three dimensions that share a single data profile:
+
+| Mode | Overworld | Nether | End |
+|:---|:---|:---|:---|
+| **Easy** | `EasyWorld` | `EasyWorld-nether` | `EasyWorld-end` |
+| **Medium** | `MediumWorld` | `MediumWorld-nether` | `MediumWorld-end` |
+| **Hard** | `HardWorld` | `HardWorld-nether` | `HardWorld-end` |
+
+*   **Native Persistence**: Your inventory, health, and location are saved exactly where you leave them. Join back and you're right where you left off.
+*   **Dimensional Unity**: Moving between Overworld, Nether, and End is seamless. Your items and health carry over instantly as they do in vanilla.
+*   **Smart Respawn**: Dying in the Nether or End sends you back to your Bed Spawn in the parent Overworld.
+*   **Automated Lifecycle**: Companion worlds are created, loaded, and deleted automatically with the parent world.
 
 ### 🔒 Data Isolation 2.0
-Every managed world mode has a fully independent player profile:
-- Inventory & Armor
-- Ender Chest
-- Health, Food, Saturation, XP, Level, GameMode
-- Active Potion Effects
-- Advancement Criteria (tracked and restored per-world)
+Each Mode (`Easy`, `Medium`, `Hard`) is a distinct data silo. A player's progress in one does not affect the other. Isolated data includes:
+*   Inventory, Armor, and Ender Chest.
+*   Health, Food, Saturation, and XP levels.
+*   Active Potion Effects and GameMode.
+*   Detailed Advancement Criteria.
+
+### ⚡ Technical Excellence
+*   **Async Core**: All database I/O is offloaded to background threads. Your main thread remains at 20 TPS.
+*   **HikariCP Connection Pool**: High-performance MySQL/MariaDB management.
+*   **Safe-Teleport**: Built-in damage invulnerability buffer during world transitions.
 
 ---
 
-### ⚡ Async-First Architecture
-All database reads and writes run on background threads via `CompletableFuture`. The main game thread is **never blocked**, ensuring a stable 20 TPS regardless of player count.
+## 📥 Installation Guide
+
+Follow these steps for a perfect deployment:
+
+1.  **Download**: Get the latest `WynoWorldGen-6.2.1.jar` from the **[Releases](https://github.com/wynoislive/WynoWorldGen/releases)** page.
+2.  **Upload**: Place the file into your server's `/plugins` directory.
+3.  **Start**: Restart your server to generate the default configuration files.
+4.  **Configure**: Open `plugins/WynoWorldGen/config.yml` to set your database preferences (SQLite is used by default).
+5.  **Ready**: Use `/fw create <name> <difficulty>` to build your first survival mode.
 
 ---
 
-### 🗄️ Universal Database Support
-| Type | Details |
-|:---|:---|
-| **SQLite** *(default)* | Zero-config — auto-creates a local `.db` file. Perfect for small servers. |
-| **MySQL / MariaDB** | Full HikariCP connection pooling for high-traffic enterprise environments. |
+## 🛠 Commands & Usage
 
----
-
-### 🔄 Auto-Updater & Rollback
-- `/fw update` — downloads and installs the latest release in one command.
-- `/fw rollback` — instantly reverts to the previous backed-up JAR.
-- Admins are notified on login if a new version is available.
-
----
-
-### 🎨 Fully Translatable
-Every message, prefix, and color code lives in `messages.yml`. No recompilation needed.
-
----
-
-## 🛠 Commands & Permissions
-
-| Command | Description | Permission |
+| Command | Usage Example | Permission |
 |:---|:---|:---|
-| `/fw join <name>` | Enter a featured world. Restores your last exact location. | `wynogen.use` |
-| `/fw exit` | Save data and return to the main world. | `wynogen.use` |
-| `/fw list` | List all featured worlds. `[N]`/`[E]` badges show companion status. | `wynogen.use` |
-| `/fw create <name> <diff> [tight]` | Create a world (Easy/Medium/Hard) with optional tight biomes. | `wynogen.admin` |
-| `/fw delete <name>` | Delete a world and all companion worlds. | `wynogen.admin` |
-| `/fw reload` | Reload `config.yml` and `messages.yml` live. | `wynogen.admin` |
-| `/fw update` | Check and install the latest plugin version. | `wynogen.admin` |
-| `/fw rollback` | Revert the plugin to the previous backup JAR. | `wynogen.admin` |
-
-*Aliases: `/featuredworld` · `/fw`*
+| `/fw join <name>` | `/fw join Survival_1` | `wynogen.use` |
+| `/fw exit` | Returns you to the main spawn. | `wynogen.use` |
+| `/fw list` | View all active modes and dimension status. | `wynogen.use` |
+| `/fw create <n> <d> [t]` | `/fw create HardSMP HARD tight` | `wynogen.admin` |
+| `/fw delete <name>` | Permanently unloads and deletes data. | `wynogen.admin` |
+| `/fw reload` | Reload configurations and messages. | `wynogen.admin` |
+| `/fw update` | Downloads the latest version automatically. | `wynogen.admin` |
+| `/fw rollback` | Reverts to the previous backup JAR. | `wynogen.admin` |
 
 ---
 
-## 📥 Installation
+## ⚙️ Detailed Configuration (`config.yml`)
 
-1. Download **[WynoWorldGen-6.2.1.jar](https://github.com/wynoislive/WynoWorldGen/releases/tag/v6.2.1)** from the latest release.
-2. Place the JAR in your server's `plugins/` folder.
-3. Restart the server — a default `config.yml` and `messages.yml` are generated automatically.
-4. *(Optional)* Switch to MySQL in `config.yml` and run `/fw reload`.
+```yaml
+options:
+  save_interval_ticks: 6000     # How often data auto-saves (300 seconds)
+  safety_buffer_ticks: 60       # Ticks of invulnerability after world change
+  
+  # Dimension Management
+  generate_nether: true          # Auto-create Nether for new worlds
+  generate_end: true             # Auto-create End for new worlds
+  
+  # Portal Controls
+  disable_nether_portals: false  # Block Nether portal travel
+  disable_end_portals: false     # Block End portal travel
+  disable_portals: false         # Legacy blanket block
+  
+  respawn_in_same_world: true    # Keep player in the Mode world on death
+  metrics: true                  # Support development with bStats
+  
+  updater:
+    auto_check: true             # Notify admins of new releases
+    notify_admins: true
+```
 
 ---
 
-## 📦 Changelog
+## 🗄️ Database Setup
 
-### v6.2.1 — Persistence & Respawn Update
-- **Shared Dimension Profiles**: Inventory and hearts are now shared between a world and its companions.
-- **Last Location Persistence**: Players now join back at their exact last location (X, Y, Z).
-- **Advanced Respawn**: Die in Nether/End -> Respawn in Overworld (Bed spawn supported).
-- **Smooth Portals**: Direct teleportation between dimensions with no sync delay.
+### Option A: SQLite (Small Servers)
+Simply leave the `database.type` as `SQLITE`. The plugin will create a local `data.db` file automatically.
 
-### v6.2.0
-- Companion world auto-generation on `/fw create`.
-- Smart portal routing to private companion dimensions.
-- 4 new granular config options for portal/generation control.
+### Option B: MySQL (High Performance)
+1.  Change `database.type` to `MYSQL`.
+2.  Fill in your `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD`.
+3.  Run `/fw reload`. The plugin will migrate your connection instantly.
 
 ---
 
-<p align="center">© 2026 <strong>WYNO</strong> — Developed for professional Minecraft environments.</p>
+## 📚 Support & Wiki
+
+For advanced setup, developer API, and detailed localization guides:
+👉 **[WynoWorldGen Official Wiki](https://github.com/wynoislive/WynoWorldGen/wiki)**
+
+Join our developer community for real-time support:
+👉 **[Discord Support Server](https://discord.gg/9WJSP4Kqg4)**
+
+---
+
+<p align="center">© 2026 <strong>WYNO</strong> — Professional World Generation Architecture.</p>
