@@ -27,10 +27,9 @@
 
 ---
 
-## 🚀 Pro Features
+## 🚀 Companion World System
 
-### 🌍 Companion World System (The Multiverse)
-Every world created is a "Mode" containing three dimensions that share a single data profile:
+When you create a Featured World, the plugin automatically creates private dimensions:
 
 | Mode | Overworld | Nether | End |
 |:---|:---|:---|:---|
@@ -57,13 +56,11 @@ Each Mode (`Easy`, `Medium`, `Hard`) is a distinct data silo. A player's progres
 
 ---
 
-## 📥 Installation Guide
-
-Follow these steps for a perfect deployment:
+## 📥 Installation
 
 1.  **Download**: Get the latest **[WynoWorldGen-6.2.1.jar](https://github.com/wynoislive/WynoWorldGen/releases/tag/v6.2.1)** from the latest release.
-2.  **Upload**: Place the file into your server's `/plugins` directory.
-3.  **Start**: Restart your server — a default `config.yml` and `messages.yml` are generated automatically.
+2.  **Upload**: Place the JAR in your server's `plugins/` folder.
+3.  **Start**: Restart the server — a default `config.yml` and `messages.yml` are generated automatically.
 4.  **Configure**: *(Optional)* Switch to MySQL in `config.yml` and run `/fw reload`.
 
 ### Upgrading from v5.x
@@ -104,7 +101,7 @@ options:
   
   respawn_in_same_world: true    # Keep player in the Mode world on death
   metrics: true                  # Support development with bStats
-  
+
   updater:
     auto_check: true             # Notify admins of new releases
     notify_admins: true
