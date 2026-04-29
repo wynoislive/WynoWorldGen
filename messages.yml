@@ -16,11 +16,12 @@ commands:
     invalid-difficulty: "&cInvalid difficulty! Use EASY, MEDIUM, or HARD."
     starting: "&aStarting world generation for '&f{name}&a' ({difficulty}){tight}..."
     success: "&aWorld '&f{name}&a' created successfully!"
-    failed: "&cFailed to create world. It might already exist."
+    error: "&cFailed to create world. It might already exist."
   delete:
     usage: "&7To delete a world, use: &b/fw delete <name>"
+    starting: "&eInitiating deletion of '&f{name}&e' and its dimensions..."
     success: "&cWorld '&f{name}&c' and its companion worlds have been deleted."
-    failed: "&cCould not delete world '&f{name}&c'. Is it a featured world?"
+    error: "&cCould not delete world '&f{name}&c'. Is it a featured world?"
   join:
     usage: "&7To join a world, use: &b/fw join <name>"
     preparing: "&ePreparing world jump... &7(Syncing data)"

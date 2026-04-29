@@ -89,7 +89,7 @@ public class FWCommand implements CommandExecutor, TabCompleter {
                         }
                         
                         player.sendMessage(plugin.getLanguageManager().getMessage("commands.join.success")
-                                .replace("{world}", worldName));
+                                .replace("{name}", worldName));
                     });
                 });
             });
@@ -165,16 +165,28 @@ public class FWCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        player.sendMessage(plugin.getLanguageManager().getMessage("commands.create.starting").replace("{world}", name));
+        player.sendMessage(plugin.getLanguageManager().getMessage("commands.create.starting")
+                .replace("{name}", name)
+                .replace("{difficulty}", difficulty)
+                .replace("{tight}", tight ? " (Tight Mode)" : ""));
         
         boolean success = plugin.getWorldManager().createWorld(name, difficulty, tight, true);
         if (success) {
-            player.sendMessage(plugin.getLanguageManager().getMessage("commands.create.success").replace("{world}", name));
-            if (plugin.getConfig().getBoolean("options.generate_nether", true)) {
-                player.sendMessage(plugin.getLanguageManager().getMessage("world.companion-created").replace("{type}", "Nether"));
-            }
-            if (plugin.getConfig().getBoolean("options.generate_end", true)) {
-                player.sendMessage(plugin.getLanguageManager().getMessage("world.companion-created").replace("{type}", "End"));
+            player.sendMessage(plugin.getLanguageManager().getMessage("commands.create.success").replace("{name}", name));
+            
+            String netherName = plugin.getWorldManager().getNetherWorldName(name);
+            String endName = plugin.getWorldManager().getEndWorldName(name);
+            
+            if (netherName != null && endName != null) {
+                player.sendMessage(plugin.getLanguageManager().getMessage("world.companion-created")
+                        .replace("{nether}", netherName)
+                        .replace("{end}", endName));
+            } else if (netherName != null) {
+                player.sendMessage(plugin.getLanguageManager().getMessage("world.companion-nether-only")
+                        .replace("{nether}", netherName));
+            } else if (endName != null) {
+                player.sendMessage(plugin.getLanguageManager().getMessage("world.companion-end-only")
+                        .replace("{end}", endName));
             }
         } else {
             player.sendMessage(plugin.getLanguageManager().getMessage("commands.create.error"));
@@ -198,13 +210,13 @@ public class FWCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        player.sendMessage(plugin.getLanguageManager().getMessage("commands.delete.starting").replace("{world}", name));
+        player.sendMessage(plugin.getLanguageManager().getMessage("commands.delete.starting").replace("{name}", name));
         
         if (plugin.getWorldManager().deleteWorld(name)) {
-            player.sendMessage(plugin.getLanguageManager().getMessage("commands.delete.success").replace("{world}", name));
+            player.sendMessage(plugin.getLanguageManager().getMessage("commands.delete.success").replace("{name}", name));
             player.sendMessage(plugin.getLanguageManager().getMessage("world.companion-deleted"));
         } else {
-            player.sendMessage(plugin.getLanguageManager().getMessage("commands.delete.error"));
+            player.sendMessage(plugin.getLanguageManager().getMessage("commands.delete.error").replace("{name}", name));
         }
     }
 

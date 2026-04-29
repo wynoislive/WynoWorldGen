@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-6.2.1-6C63FF.svg?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Version-6.2.2-6C63FF.svg?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/Java-21-F89820.svg?style=for-the-badge" alt="Java">
   <img src="https://img.shields.io/badge/Platform-Spigot%20%2F%20Paper-4CAF50.svg?style=for-the-badge" alt="Platform">
   <img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="License">
@@ -76,7 +76,7 @@ When you create a Featured World, the plugin automatically creates private dimen
 
 ## 📥 Installation
 
-1.  **Download**: Get the latest **[WynoWorldGen-6.2.1.jar](https://github.com/wynoislive/WynoWorldGen/releases/tag/v6.2.1)** from the latest release.
+1.  **Download**: Get the latest **[WynoWorldGen-6.2.2.jar](https://github.com/wynoislive/WynoWorldGen/releases/tag/v6.2.2)** from the latest release.
 2.  **Upload**: Place the JAR in your server's `plugins/` folder.
 3.  **Start**: Restart the server — a default `config.yml` and `messages.yml` are generated automatically.
 4.  **Configure**: *(Optional)* Switch to MySQL in `config.yml` and run `/fw reload`.
@@ -135,6 +135,14 @@ Join our developer community for real-time support:
 ---
 
 ## 📦 Changelog
+
+### v6.2.2 — Portal & Compatibility Fixes
+- **Linked Portal Generation**: Fixed return portals not spawning by using native teleportation logic.
+- **Coordinate Scaling**: Accurate 1:8 Nether-to-Overworld scaling for precise portal linking.
+- **Cross-Plugin Sync**: Global listener detects teleports from other plugins and swaps data instantly.
+- **Custom Spawn Support**: End portals now respect `/setworldspawn` in custom End dimensions.
+- **Smart Respawn**: Added Bed-Spawn support for End exit portals.
+- **Message Refinement**: Fixed placeholder bugs and improved companion world feedback.
 
 ### v6.2.1 — Persistence & Respawn Update
 - **Shared Dimension Profiles**: Inventory and hearts are now shared between a world and its companions.

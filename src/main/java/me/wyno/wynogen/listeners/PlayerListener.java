@@ -12,7 +12,9 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.metadata.FixedMetadataValue;
 
 public class PlayerListener implements Listener {
@@ -37,7 +39,7 @@ public class PlayerListener implements Listener {
 
         if (!fromParent && !fromCompanion) return;
 
-        // Legacy / blanket disable_portals toggle
+        // Blanket disable_portals toggle
         if (plugin.getConfig().getBoolean("options.disable_portals", false)) {
             event.setCancelled(true);
             event.getPlayer().sendMessage(plugin.getLanguageManager().getMessage("world.portals-disabled"));
@@ -45,16 +47,16 @@ public class PlayerListener implements Listener {
         }
 
         String parentName = fromParent ? fromWorldName : wm.getParentWorldName(fromWorldName);
-        World.Environment targetEnv = getTargetEnvironment(event);
-
-        if (targetEnv == World.Environment.NETHER) {
-            handleNetherPortal(event, parentName, fromParent);
-        } else if (targetEnv == World.Environment.THE_END) {
-            handleEndPortal(event, parentName, fromParent);
+        
+        // Handle based on the portal type
+        if (event.getCause() == PlayerTeleportEvent.TeleportCause.NETHER_PORTAL) {
+            handleNetherPortal(event, parentName);
+        } else if (event.getCause() == PlayerTeleportEvent.TeleportCause.END_PORTAL) {
+            handleEndPortal(event, parentName);
         }
     }
 
-    private void handleNetherPortal(PlayerPortalEvent event, String parentName, boolean fromParent) {
+    private void handleNetherPortal(PlayerPortalEvent event, String parentName) {
         if (plugin.getConfig().getBoolean("options.disable_nether_portals", false)) {
             event.setCancelled(true);
             event.getPlayer().sendMessage(plugin.getLanguageManager().getMessage("world.nether-portals-disabled"));
@@ -62,29 +64,41 @@ public class PlayerListener implements Listener {
         }
 
         WorldManager wm = plugin.getWorldManager();
-        if (fromParent) {
-            World netherWorld = wm.getNetherWorld(parentName);
-            if (netherWorld == null) {
-                event.setCancelled(true);
-                event.getPlayer().sendMessage(plugin.getLanguageManager().getMessage("world.nether-portals-disabled"));
-                return;
-            }
-            event.setCancelled(true);
-            event.getPlayer().sendMessage(plugin.getLanguageManager().getMessage("world.teleporting-nether"));
-            // DIRECT Teleport — dimensions share profile, no sync needed
-            event.getPlayer().teleport(netherWorld.getSpawnLocation());
-            applySafety(event.getPlayer());
+        World targetWorld;
+        double scale;
+        String messageKey;
+
+        // Logic: If we are currently in the Nether, we go back to the parent Overworld.
+        // Otherwise, we go to the companion Nether.
+        if (event.getFrom().getWorld().getEnvironment() == World.Environment.NETHER) {
+            targetWorld = Bukkit.getWorld(parentName);
+            scale = 8.0;
+            messageKey = "world.teleporting-overworld";
         } else {
-            World parentWorld = Bukkit.getWorld(parentName);
-            if (parentWorld == null) { event.setCancelled(true); return; }
-            event.setCancelled(true);
-            event.getPlayer().sendMessage(plugin.getLanguageManager().getMessage("world.teleporting-overworld"));
-            event.getPlayer().teleport(parentWorld.getSpawnLocation());
-            applySafety(event.getPlayer());
+            targetWorld = wm.getNetherWorld(parentName);
+            scale = 0.125;
+            messageKey = "world.teleporting-nether";
         }
+
+        if (targetWorld == null) {
+            event.setCancelled(true);
+            return;
+        }
+
+        Location from = event.getFrom();
+        Location to = new Location(targetWorld, from.getX() * scale, from.getY(), from.getZ() * scale, from.getYaw(), from.getPitch());
+        
+        // Use event methods to allow Bukkit to handle portal search and creation
+        event.setTo(to);
+        event.setCanCreatePortal(true);
+        event.setSearchRadius(128);
+        event.setCreationRadius(16);
+
+        event.getPlayer().sendMessage(plugin.getLanguageManager().getMessage(messageKey));
+        applySafety(event.getPlayer());
     }
 
-    private void handleEndPortal(PlayerPortalEvent event, String parentName, boolean fromParent) {
+    private void handleEndPortal(PlayerPortalEvent event, String parentName) {
         if (plugin.getConfig().getBoolean("options.disable_end_portals", false)) {
             event.setCancelled(true);
             event.getPlayer().sendMessage(plugin.getLanguageManager().getMessage("world.end-portals-disabled"));
@@ -92,34 +106,60 @@ public class PlayerListener implements Listener {
         }
 
         WorldManager wm = plugin.getWorldManager();
-        if (fromParent) {
-            World endWorld = wm.getEndWorld(parentName);
-            if (endWorld == null) {
-                event.setCancelled(true);
-                event.getPlayer().sendMessage(plugin.getLanguageManager().getMessage("world.end-portals-disabled"));
-                return;
+        World targetWorld;
+        Location targetLoc;
+        String messageKey;
+
+        // Logic: If we are in the End, we go back to parent Overworld.
+        // We use the player's bed if it's in the parent world, otherwise the spawn.
+        if (event.getFrom().getWorld().getEnvironment() == World.Environment.THE_END) {
+            targetWorld = Bukkit.getWorld(parentName);
+            if (targetWorld == null) { event.setCancelled(true); return; }
+            
+            Location bed = event.getPlayer().getBedSpawnLocation();
+            if (bed != null && bed.getWorld().getName().equals(parentName)) {
+                targetLoc = bed;
+            } else {
+                targetLoc = targetWorld.getSpawnLocation();
             }
-            event.setCancelled(true);
-            event.getPlayer().sendMessage(plugin.getLanguageManager().getMessage("world.teleporting-end"));
-            event.getPlayer().teleport(endWorld.getSpawnLocation());
-            applySafety(event.getPlayer());
+            messageKey = "world.teleporting-overworld";
         } else {
-            World parentWorld = Bukkit.getWorld(parentName);
-            if (parentWorld == null) { event.setCancelled(true); return; }
-            event.setCancelled(true);
-            event.getPlayer().sendMessage(plugin.getLanguageManager().getMessage("world.teleporting-overworld"));
-            event.getPlayer().teleport(parentWorld.getSpawnLocation());
-            applySafety(event.getPlayer());
+            // FROM Overworld -> TO End
+            targetWorld = wm.getEndWorld(parentName);
+            if (targetWorld == null) { event.setCancelled(true); return; }
+            
+            // Use the target world's configured spawn location (requested by user)
+            // This replaces the fixed obsidian platform coordinates.
+            targetLoc = targetWorld.getSpawnLocation();
+            messageKey = "world.teleporting-end";
         }
+
+        event.setTo(targetLoc);
+        event.getPlayer().sendMessage(plugin.getLanguageManager().getMessage(messageKey));
+        applySafety(event.getPlayer());
     }
 
-    private World.Environment getTargetEnvironment(PlayerPortalEvent event) {
-        String cause = event.getCause().name();
-        if (cause.contains("NETHER")) return World.Environment.NETHER;
-        if (cause.contains("END"))    return World.Environment.THE_END;
-        World.Environment fromEnv = event.getFrom().getWorld().getEnvironment();
-        if (fromEnv == World.Environment.NETHER) return World.Environment.NORMAL;
-        return World.Environment.NETHER;
+    // =========================================================================
+    // Cross-World Sync — catch teleports from other plugins
+    // =========================================================================
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onWorldChange(PlayerChangedWorldEvent event) {
+        org.bukkit.entity.Player player = event.getPlayer();
+        String from = event.getFrom().getName();
+        String to = player.getWorld().getName();
+
+        // Resolve data buckets (parent worlds or "default")
+        String fromId = plugin.getDataManager().resolveDataId(from);
+        String toId   = plugin.getDataManager().resolveDataId(to);
+
+        // If the data profile bucket changed, we must swap data.
+        if (!fromId.equals(toId)) {
+            plugin.getDataManager().savePlayerData(player, from).thenRun(() -> {
+                plugin.getDataManager().loadPlayerData(player, to);
+            });
+            applySafety(player);
+        }
     }
 
     // =========================================================================
@@ -132,6 +172,11 @@ public class PlayerListener implements Listener {
         WorldManager wm = plugin.getWorldManager();
 
         if (!wm.isManagedWorld(fromWorldName)) return;
+
+        // Respect config toggle for staying in the mode worlds
+        if (!plugin.getConfig().getBoolean("options.respawn_in_same_world", true)) {
+            return;
+        }
 
         // Logic: Always respawn in the PARENT Overworld
         String parentName = wm.isFeaturedWorld(fromWorldName) ? fromWorldName : wm.getParentWorldName(fromWorldName);
@@ -156,8 +201,7 @@ public class PlayerListener implements Listener {
     public void onJoin(PlayerJoinEvent event) {
         String worldName = event.getPlayer().getWorld().getName();
         if (plugin.getWorldManager().isManagedWorld(worldName)) {
-            event.getPlayer().getInventory().clear();
-            event.getPlayer().getEnderChest().clear();
+            // DataManager.loadPlayerData handles clearing and loading
             plugin.getDataManager().loadPlayerData(event.getPlayer(), worldName);
             applySafety(event.getPlayer());
         }

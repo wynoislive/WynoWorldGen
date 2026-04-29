@@ -37,7 +37,7 @@ public class DataManager {
      * Resolves the correct world identifier for data isolation.
      * Dimensions (Nether/End) share the same profile as their Parent Overworld.
      */
-    private String resolveDataId(String worldName) {
+    public String resolveDataId(String worldName) {
         if (plugin.getWorldManager().isCompanionWorld(worldName)) {
             return plugin.getWorldManager().getParentWorldName(worldName);
         }
